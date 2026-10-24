@@ -167,6 +167,22 @@ const LS = {
   set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
 };
 
+/* ---------------- keep keys safe across restarts: localStorage + IndexedDB + persistent-storage request ---------------- */
+const IDB = {
+  open() { return new Promise((res, rej) => { try { const r = indexedDB.open('scout', 1); r.onupgradeneeded = () => r.result.createObjectStore('kv'); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); } catch (e) { rej(e); } }); },
+  async get(k) { const db = await IDB.open(); return new Promise(res => { const q = db.transaction('kv').objectStore('kv').get(k); q.onsuccess = () => res(q.result); q.onerror = () => res(undefined); }); },
+  async set(k, v) { const db = await IDB.open(); return new Promise(res => { const tx = db.transaction('kv', 'readwrite'); if (v) tx.objectStore('kv').put(v, k); else tx.objectStore('kv').delete(k); tx.oncomplete = () => res(true); tx.onerror = () => res(false); }); }
+};
+function persistKey(name, lsName, val) { LS.set(lsName, val); IDB.set(name, val).catch(() => {}); try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch (e) {} }
+async function restoreKeys() {
+  let changed = false;
+  try {
+    if (!S.key) { const k = await IDB.get('finnhub'); if (k) { S.key = k; LS.set('scout_key', k); changed = true; } } else IDB.set('finnhub', S.key).catch(() => {});
+    if (!S.tdKey) { const k = await IDB.get('twelve'); if (k) { S.tdKey = k; LS.set('scout_td', k); changed = true; } } else IDB.set('twelve', S.tdKey).catch(() => {});
+  } catch (e) {}
+  if (changed) { render(); if (S.tab === 'radar' && !S.results.length && !S.scanning) scan(); }
+}
+
 /* ---------------- state ---------------- */
 const S = {
   key: LS.get('scout_key', ''), tdKey: LS.get('scout_td', ''), tab: 'radar', theme: 'small', results: [], scanning: false, scanId: 0, filter: 'all', progress: 0, progressTxt: '',
@@ -517,22 +533,22 @@ function renderWatch() {
 /* ---------------- setup ---------------- */
 function renderSetup() {
   view.onclick = null;
-  let h = '<h2>Live data</h2><div class="card" style="cursor:default"><div style="font-size:.86rem;line-height:1.5;color:var(--dim)">Scout uses <b style="color:var(--text)">Finnhub</b>, which offers a free key for personal use. Create a free account at finnhub.io, copy your API key, and paste it here. It is stored only on this device. Free data covers mainly <b style="color:var(--text)">US-listed</b> stocks (including big European companies that list in the US). It may be delayed, and the free plan limits how fast we can scan.</div>' +
+  let h = '<h2>Live data</h2><div class="card" style="cursor:default"><div style="font-size:.86rem;line-height:1.5;color:var(--dim)">Scout uses <b style="color:var(--text)">Finnhub</b>, which offers a free key for personal use. Create a free account at finnhub.io, copy your API key, and paste it here. It is stored only on this device. Keep using the same browser (or the home-screen icon) so it stays saved; private/incognito windows forget it. Free data covers mainly <b style="color:var(--text)">US-listed</b> stocks (including big European companies that list in the US). It may be delayed, and the free plan limits how fast we can scan.</div>' +
     '<label class="l">Finnhub API key</label><input type="password" id="key" placeholder="paste key here" value="' + esc(S.key) + '" autocomplete="off">' +
     '<div class="row" style="margin-top:10px"><button class="btn primary" id="ks">Save &amp; test</button><button class="btn" id="kc">Remove key</button></div></div>';
   h += '<h2>Month-by-month check (optional)</h2><div class="card" style="cursor:default"><div style="font-size:.84rem;line-height:1.5;color:var(--dim)">For the exact record of the last 6 months, create a free key at <a href="https://twelvedata.com/register" target="_blank" rel="noopener noreferrer" style="color:var(--amber)">twelvedata.com</a> and paste it here. Only used when you open a company.</div><label class="l">Twelve Data key</label><input type="password" id="tdkey" value="' + esc(S.tdKey) + '" autocomplete="off"><div class="row" style="margin-top:10px"><button class="btn" id="tds">Save</button></div></div>';
-  h += '<h2>Status</h2><div class="card" style="cursor:default"><div class="kv"><span>Mode</span><span>' + (live() ? 'LIVE' : 'DEMO (sample data)') + '</span></div><div class="kv"><span>USD→EUR</span><span>' + S.fx.rate.toFixed(4) + (S.fx.approx ? ' (approx.)' : '') + '</span></div><div class="kv"><span>Watchlist</span><span>' + S.watch.length + '</span></div></div>';
+  h += '<h2>Status</h2><div class="card" style="cursor:default"><div class="kv"><span>Mode</span><span>' + (live() ? 'LIVE' : 'DEMO (sample data)') + '</span></div><div class="kv"><span>USD→EUR</span><span>' + S.fx.rate.toFixed(4) + (S.fx.approx ? ' (approx.)' : '') + '</span></div><div class="kv"><span>Key saved on this device</span><span>' + (S.key ? 'Yes' : 'No') + '</span></div><div class="kv"><span>Watchlist</span><span>' + S.watch.length + '</span></div></div>';
   h += '<div class="row" style="margin-top:10px"><button class="btn block" id="cc">Clear cached data</button></div>';
   h += '<h2>How to read the scores</h2><div class="card" style="cursor:default;font-size:.84rem;line-height:1.55;color:var(--dim)"><b style="color:var(--amber)">MOMENTUM (0–100)</b> adds up momentum, closeness to the yearly high, a surge in trading volume, sales growth and how newly listed the company is. It measures <i>attention and trend</i>, not value.<br><br><b style="color:#ff9d96">RISK (0–100)</b> adds up warning signs: tiny company size, thin trading, wild yearly range, a huge recent run-up, a very new listing, high volatility, falling sales and missing data.<br><br>High momentum with high risk is exactly the profile of both lottery wins and big losses. Neither score is a prediction or advice. Always do your own research and use a licensed broker.</div>';
   view.innerHTML = h;
   $('#ks').onclick = async () => {
     const k = $('#key').value.trim(); if (!k) { toast('Paste a key first.'); return; }
     S.key = k; toast('Testing key…', 8000);
-    try { nextAt = 0; const q = await fh('/quote', { symbol: 'AAPL' }); if (q && q.c) { LS.set('scout_key', k); toast('Key works — LIVE mode on.'); render(); } else { S.key = LS.get('scout_key', ''); toast('Key answered but returned no data.'); } }
+    try { nextAt = 0; const q = await fh('/quote', { symbol: 'AAPL' }); if (q && q.c) { persistKey('finnhub', 'scout_key', k); toast('Key works — LIVE mode on.'); render(); } else { S.key = LS.get('scout_key', ''); toast('Key answered but returned no data.'); } }
     catch (e) { S.key = LS.get('scout_key', ''); toast(errMsg(e), 5000); render(); }
   };
-  $('#tds').onclick = () => { S.tdKey = $('#tdkey').value.trim(); LS.set('scout_td', S.tdKey); toast(S.tdKey ? 'Saved.' : 'Removed.'); };
-  $('#kc').onclick = () => { S.key = ''; try { localStorage.removeItem('scout_key'); } catch (e) {} S.results = []; toast('Key removed — DEMO mode.'); render(); };
+  $('#tds').onclick = () => { S.tdKey = $('#tdkey').value.trim(); persistKey('twelve', 'scout_td', S.tdKey); toast(S.tdKey ? 'Saved.' : 'Removed.'); };
+  $('#kc').onclick = () => { S.key = ''; try { localStorage.removeItem('scout_key'); } catch (e) {} IDB.set('finnhub', '').catch(() => {}); S.results = []; toast('Key removed — DEMO mode.'); render(); };
   $('#cc').onclick = () => { Object.keys(cache).forEach(k => delete cache[k]); LS.set('scout_cache', cache); S.snaps = {}; toast('Cache cleared.'); };
 }
 
@@ -541,7 +557,8 @@ $('#tabs').onclick = e => { const b = e.target.closest('button'); if (b) setTab(
 if (!LS.get('scout_ack', false)) { $('#gate').style.display = 'flex'; $('#gateOk').onclick = () => { LS.set('scout_ack', true); $('#gate').style.display = 'none'; }; }
 getFx().catch(() => {});
 render();
-setTimeout(() => { if (S.tab === 'radar' && !S.results.length && !S.scanning) scan(); }, 400);
+restoreKeys();
+setTimeout(() => { if (S.tab === 'radar' && !S.results.length && !S.scanning) scan(); }, 700);
 if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
 })();
 </script>

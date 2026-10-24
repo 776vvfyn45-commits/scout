@@ -11,6 +11,7 @@
 
   /* ---------- themes (US-listed tickers, incl. big European ADRs). Missing / renamed tickers are skipped at scan time. ---------- */
   const THEMES = {
+    popular: { label: 'WELL-KNOWN',      syms: ['AAPL', 'MSFT', 'NVDA', 'AMZN', 'GOOGL', 'META', 'TSLA', 'NFLX', 'AMD', 'DIS', 'NKE', 'V'] },
     ai:      { label: 'AI & CHIPS',      syms: ['NVDA', 'AMD', 'AVGO', 'SMCI', 'ARM', 'PLTR', 'AI', 'SOUN', 'TSM', 'ASML', 'MU', 'MRVL'] },
     quantum: { label: 'QUANTUM',         syms: ['IONQ', 'RGTI', 'QBTS', 'QUBT', 'IBM', 'GOOGL'] },
     space:   { label: 'SPACE & DRONES',  syms: ['RKLB', 'ASTS', 'LUNR', 'RDW', 'PL', 'ACHR', 'JOBY', 'KTOS', 'AVAV'] },

@@ -148,6 +148,7 @@
 
 <script src="scout.js"></script>
 <script src="brokers.js"></script>
+<script src="names.js"></script>
 <script>
 (function () {
 'use strict';
@@ -256,27 +257,46 @@ function render() {
 function renderRadar() {
   const themes = Object.keys(Scout.THEMES);
   let h = '';
-  if (!live()) h += '<div class="banner"><b>DEMO MODE — SAMPLE DATA, NOT REAL.</b> Add a free Finnhub key in SETUP to scan real companies.</div>';
-  h += '<h2>Look up a ticker</h2><div class="row"><input type="text" id="q" placeholder="TICKER  e.g. NVDA" autocapitalize="characters" autocomplete="off" value="' + esc(S.query) + '"><button class="btn primary" id="go">Go</button></div>';
+  if (!live()) h += '<div class="banner"><b>DEMO MODE — SAMPLE DATA, NOT REAL.</b> Get a free key (2 minutes) to scan real companies: <a href="https://finnhub.io/register" target="_blank" rel="noopener noreferrer" style="color:var(--amber)">finnhub.io/register</a>, then paste it in SETUP.</div>';
+  h += '<h2>Find a company</h2><div class="row"><input type="text" id="q" placeholder="Name or ticker, e.g. Tesla" autocomplete="off" autocorrect="off" value="' + esc(S.query) + '"><button class="btn primary" id="go">Go</button></div><div id="sug"></div>';
   h += '<h2>Scan a theme</h2><div class="chips" id="themes">' + themes.map(k => '<button class="chip' + (S.theme === k ? ' on' : '') + '" data-k="' + k + '">' + Scout.THEMES[k].label + '</button>').join('') + '</div>';
   h += '<button class="btn primary block" id="scan"' + (S.scanning ? ' disabled' : '') + '>' + (S.scanning ? 'Scanning…' : 'Scan ' + Scout.THEMES[S.theme].label) + '</button>';
   h += '<div class="prog" id="prog" style="display:' + (S.scanning ? 'block' : 'none') + '"><i style="width:' + S.progress + '%"></i></div><div id="progTxt" style="font-family:var(--mono);font-size:.72rem;color:var(--dim);min-height:16px">' + esc(S.progressTxt) + '</div>';
   h += '<h2>Results · best radar first</h2><div id="results">' + (S.results.length ? S.results.map(cardHtml).join('') :
-    '<div class="empty">Pick a theme and tap SCAN.<br>RADAR = how much is happening.<br>RISK = how easily it could go wrong.<br>High on both is where big wins <i>and</i> big losses live.</div>') + '</div>';
+    '<div class="empty">Pick a theme and tap SCAN.<br>RADAR = how much is happening.<br>RISK = how easily it could go wrong.<br>High on both is where big wins <i>and</i> big losses live.</div>' +
+    '<h2>Not sure where to start? Tap one</h2>' + starters().map(sugRow).join('')) + '</div>';
   view.innerHTML = h;
   $('#go').onclick = () => lookup($('#q').value);
   $('#q').onkeydown = e => { if (e.key === 'Enter') lookup($('#q').value); };
+  $('#q').oninput = () => showSug($('#q').value);
+  $('#sug').onclick = e => { const r = e.target.closest('[data-pick]'); if (r) { $('#sug').innerHTML = ''; lookup(r.dataset.pick); } };
   $('#themes').onclick = e => { const b = e.target.closest('.chip'); if (b) { S.theme = b.dataset.k; S.results = []; renderRadar(); } };
   $('#scan').onclick = scan;
   $('#results').onclick = cardClick;
 }
-function cardClick(e) { const c = e.target.closest('.card'); if (c) openDetail(c.dataset.sym); }
+function cardClick(e) {
+  const p = e.target.closest('[data-pick]'); if (p) { lookup(p.dataset.pick); return; }
+  const c = e.target.closest('.card'); if (c && c.dataset.sym) openDetail(c.dataset.sym);
+}
+const STARTER_T = ['NVDA', 'TSLA', 'PLTR', 'RKLB', 'OKLO', 'IONQ', 'HOOD', 'SOFI', 'DUOL', 'SMCI', 'LLY', 'COIN'].map(t => Names.LIST.find(d => d.symbol === t)).filter(Boolean);
+function starters() { return live() ? STARTER_T : DEMO.map(d => ({ symbol: d.symbol, name: d.name, about: 'Sample company — demo only' })); }
+function sugRow(d) { return '<button class="card" data-pick="' + esc(d.symbol) + '" style="padding:10px 12px"><div class="l1"><div><span class="sym" style="font-size:1.1rem">' + esc(d.symbol) + '</span> <span style="color:var(--text)">' + esc(d.name) + '</span></div><span style="color:var(--amber)">›</span></div><div class="nm" style="max-width:none">' + esc(d.about) + '</div></button>'; }
+function showSug(q) { const box = $('#sug'); if (!box) return; const r = Names.search(q, 6); box.innerHTML = r.length ? '<div style="margin:6px 0">' + r.map(sugRow).join('') + '</div>' : (q.trim().length > 1 ? '<div class="nm" style="max-width:none;margin:6px 2px">No match in our list. Press Go to try it as a ticker' + (live() ? ' or a name' : ' (live mode searches more)') + '.</div>' : ''); }
 
 async function lookup(raw) {
-  const sym = String(raw || '').toUpperCase().replace(/[^A-Z0-9.\-]/g, ''); if (!sym) return; S.query = sym;
+  raw = String(raw || '').trim(); if (!raw) return;
+  const hit = Names.search(raw, 1)[0];
+  let sym = (hit && (hit.symbol.toLowerCase() === raw.toLowerCase() || raw.length > 2) ? hit.symbol : raw.toUpperCase().replace(/[^A-Z0-9.\-]/g, '')); if (!sym) return; S.query = '';
   toast('Looking up ' + sym + '…', 8000);
-  try { const sn = await getSnap(sym); if (!sn) { toast('No data for “' + sym + '”. In live mode this covers US-listed stocks.'); return; } S.snaps[sym] = sn; toast('Found ' + sym, 800); openDetail(sym); }
-  catch (e) { toast(errMsg(e), 5000); }
+  try {
+    let sn = await getSnap(sym);
+    if (!sn && live() && !hit) {                   // unknown name: ask Finnhub's search
+      const r = await fh('/search', { q: raw }); const c = r && r.result && r.result.find(x => x.type === 'Common Stock' && x.symbol && !x.symbol.includes('.')); if (c) { sym = c.symbol; sn = await getSnap(sym); }
+    }
+    if (!sn && !live()) { toast('Demo mode only has 6 sample companies. Add a free Finnhub key in SETUP to look up real ones.', 6000); return; }
+    if (!sn) { toast('Nothing found for “' + raw + '”. Try the ticker, or tap one of the suggestions.', 5000); return; }
+    S.snaps[sym] = sn; toast('Found ' + sym, 800); openDetail(sym);
+  } catch (e) { toast(errMsg(e), 5000); }
 }
 
 async function scan() {
@@ -326,6 +346,10 @@ async function openDetail(sym) {
   $('#x').onclick = closeSheet;
   $('#sheet').onclick = e => { if (e.target.id === 'sheet') closeSheet(); };
   $('#wl').onclick = () => { const i = S.watch.indexOf(sym); if (i === -1) S.watch.push(sym); else S.watch.splice(i, 1); LS.set('scout_watch', S.watch); S.snaps[sym] = s; toast(i === -1 ? 'Added to watchlist' : 'Removed'); openDetail(sym); };
+  $('#pane').querySelectorAll('[data-open]').forEach(b => b.onclick = async () => {
+    try { await navigator.clipboard.writeText(b.dataset.tk); toast('Ticker ' + b.dataset.tk + ' copied. Paste it in the broker\'s search box.', 5000); } catch (e) { toast('Search for ' + b.dataset.tk + ' in the broker app.', 5000); }
+    window.open(b.dataset.open, '_blank', 'noopener');
+  });
   $('#pane').querySelectorAll('[data-buy]').forEach(b => b.onclick = () => paperBuy(sym, s, parseFloat(b.dataset.buy)));
   if (live()) loadNews(sym);
 }
@@ -336,9 +360,9 @@ function whereToBuy(s) {
   w.brokers.forEach(b => {
     h += '<div class="pos" style="border-left-color:' + col[b.fit] + ';display:block"><div class="row" style="justify-content:space-between"><div class="sym" style="font-size:1.05rem">' + esc(b.name) + '</div><span class="pill" style="color:' + col[b.fit] + ';border-color:' + col[b.fit] + '">' + lbl[b.fit] + '</span></div>' +
       '<div style="color:var(--dim);font-size:.74rem;margin-top:4px;line-height:1.45">' + esc(b.kind) + '<br>Small amounts: ' + esc(b.fractional) + '<br>Costs: ' + esc(b.feeNote) + '<br>Good: ' + esc(b.plus) + ' · Watch: ' + esc(b.watch) + '</div>' +
-      '<a href="' + esc(b.url) + '" target="_blank" rel="noopener noreferrer" style="color:var(--amber);font-family:var(--head);letter-spacing:.1em;font-size:.78rem;text-decoration:none">OPEN BROKER SITE ↗</a></div>';
+      '<button class="btn small primary" style="margin-top:8px" data-open="' + esc(b.url) + '" data-tk="' + esc(s.symbol) + '">Copy ' + esc(s.symbol) + ' &amp; open ' + esc(b.name) + ' ↗</button></div>';
   });
-  return h + '<div style="color:var(--dim);font-size:.7rem;line-height:1.45">Compiled ' + Brokers.UPDATED + ' from public comparison sites. Fees and stock lists change. Before buying, search the ticker <b>' + esc(s.symbol) + '</b> in the broker\'s own app and read its current fee page. Check that the broker is registered with <a href="' + Brokers.URL_CHECK + '" target="_blank" rel="noopener noreferrer" style="color:var(--amber)">BaFin</a>. Not a recommendation.</div>';
+  return h + '<div style="color:var(--dim);font-size:.7rem;line-height:1.45">Compiled ' + Brokers.UPDATED + ' from public comparison sites. Fees and stock lists change. Before buying, search the ticker <b>' + esc(s.symbol) + '</b> in the broker\'s own app and read its current fee page. Real orders are placed only inside the broker\'s app, by you. Check that the broker is registered with <a href="' + Brokers.URL_CHECK + '" target="_blank" rel="noopener noreferrer" style="color:var(--amber)">BaFin</a>. Not a recommendation.</div>';
 }
 function closeSheet() { $('#sheet').classList.remove('open'); if (S.tab === 'paper' || S.tab === 'watch') render(); }
 async function loadNews(sym) {

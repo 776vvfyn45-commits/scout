@@ -12,6 +12,7 @@
   /* ---------- themes (US-listed tickers, incl. big European ADRs). Missing / renamed tickers are skipped at scan time. ---------- */
   const THEMES = {
     small:   { label: 'SMALL & GROWING', syms: ['BBAI', 'SERV', 'RR', 'NVTS', 'RCAT', 'ONDS', 'ASPI', 'LTBR', 'ENVX', 'AMPX', 'SANA', 'TARS', 'DAVE', 'RZLV', 'UMAC', 'APLD'] },
+    smallmore: { label: 'MORE SMALL COMPANIES', syms: ['CORZ', 'AAOI', 'LASR', 'CLS', 'ZETA', 'SMTC', 'ARRY', 'SHLS', 'OPAL', 'STEM', 'FREY', 'SMMT', 'CELC', 'ACLX', 'TVTX', 'IMNM', 'LOVE', 'VITL', 'KRUS', 'SHAK', 'PAYO', 'FOUR', 'MQ', 'FLYW', 'LC', 'CRCL', 'SIDU', 'MNTS', 'QMCO'] },
     smallspace: { label: 'SMALL SPACE & DRONES', syms: ['BKSY', 'SATL', 'RCAT', 'UMAC', 'DPRO', 'ONDS', 'SPCE', 'RDW', 'LUNR', 'ASTS'] },
     smallai: { label: 'SMALL AI & DATA', syms: ['BBAI', 'SOUN', 'RZLV', 'IREN', 'APLD', 'WULF', 'CIFR', 'LAES', 'AEHR', 'NVTS'] },
     smallenergy: { label: 'SMALL ENERGY & MINERALS', syms: ['NXE', 'DNN', 'UUUU', 'LTBR', 'ASPI', 'MP', 'ENVX', 'AMPX', 'SLDP', 'SES', 'EOSE', 'NNE'] },
@@ -30,6 +31,7 @@
     defense: { label: 'DEFENCE & CYBER', syms: ['LMT', 'RTX', 'NOC', 'CRWD', 'PANW', 'S', 'ZS'] },
     europe:  { label: 'EUROPE (ADRs)',   syms: ['ASML', 'SAP', 'NVO', 'SPOT', 'ARM', 'AZN', 'SHEL', 'UL', 'ON', 'DUOL'] }
   };
+  THEMES.wide = { label: 'WIDE SWEEP (ALL SMALL)', syms: Array.from(new Set(Object.keys(THEMES).filter(k => /^small/.test(k)).reduce((a, k) => a.concat(THEMES[k].syms), []))) };
 
   /* ---------- snapshot from Finnhub payloads ---------- */
   // quote: {c,d,dp,h,l,o,pc}; metric: {metric:{...}}; profile: {name,ipo,marketCapitalization,finnhubIndustry,country,exchange,currency}
@@ -147,6 +149,36 @@
     return { trades: sells.length, wins: wins.length, winRate: sells.length ? wins.length / sells.length : null, realisedEur: realised };
   }
 
+
+  /* ---------- steadiness: did the gains come evenly, or in one jump? (from Finnhub return figures) ---------- */
+  function steadiness(s) {
+    const r5 = s.ret5d, r13 = s.ret13w, r26 = s.ret26w;
+    if (r13 == null || r26 == null) return { label: 'UNKNOWN', pts: 0, why: ['Not enough price history in the free data.'] };
+    let pts = 0; const why = [];
+    if (r5 != null && r5 > 0) { pts += 1; why.push('Up over the last week.'); } else if (r5 != null) why.push('Down over the last week.');
+    if (r13 > 0) { pts += 2; why.push('Up over ~3 months (' + (r13 >= 0 ? '+' : '') + r13.toFixed(0) + '%).'); } else why.push('Down over ~3 months.');
+    if (r26 > 0) { pts += 2; why.push('Up over ~6 months (+' + r26.toFixed(0) + '%).'); } else why.push('Down over ~6 months.');
+    if (r26 > 0 && r13 > 0) {
+      const expected = (Math.sqrt(1 + r26 / 100) - 1) * 100, ratio = r13 / expected;
+      if (ratio >= 0.6 && ratio <= 1.7) { pts += 2; why.push('Gains were spread fairly evenly across the 6 months.'); }
+      else if (ratio > 1.7) why.push('Most of the gain came in the last 3 months (a recent jump, not a steady climb).');
+      else why.push('The climb has slowed down recently.');
+    }
+    if (s.price && s.hi52) { const f = s.price / s.hi52; if (f >= 0.85) { pts += 1; why.push('Trading close to its 52-week high.'); } else if (f < 0.6) { pts -= 1; why.push('Far below its 52-week high.'); } }
+    if (r26 > 150) { pts -= 2; why.push('Gained far too fast to call steady (over 150% in 6 months).'); } else if (r13 < 100) pts += 1;
+    if (s.beta != null && s.beta <= 2) pts += 1;
+    const label = pts >= 7 && r13 > 0 && r26 > 0 ? 'STEADY' : pts >= 4 ? 'MIXED' : 'CHOPPY';
+    return { label, pts, why };
+  }
+  /* closes: monthly closing prices, oldest first (7 closes = 6 months) */
+  function monthlyConsistency(closes) {
+    if (!closes || closes.length < 3) return null;
+    const rets = []; for (let i = 1; i < closes.length; i++) if (closes[i - 1] > 0) rets.push((closes[i] / closes[i - 1] - 1) * 100);
+    const pos = rets.filter(x => x > 0).length, worst = Math.min.apply(null, rets), total = rets.length;
+    const label = pos === total && worst > -3 ? 'CONSISTENT' : pos >= total - 1 && worst > -10 ? 'MOSTLY UP' : pos >= total / 2 ? 'UP AND DOWN' : 'MOSTLY DOWN';
+    return { rets, pos, total, worst, label };
+  }
+
   const fmt = {
     usd: v => v == null ? '—' : v >= 1000 ? '$' + v.toLocaleString('en-US', { maximumFractionDigits: 0 }) : '$' + v.toFixed(v < 10 ? 3 : 2),
     big: v => v == null ? '—' : v >= 1e12 ? (v / 1e12).toFixed(2) + 'T' : v >= 1e9 ? (v / 1e9).toFixed(1) + 'B' : v >= 1e6 ? (v / 1e6).toFixed(0) + 'M' : v >= 1e3 ? (v / 1e3).toFixed(0) + 'K' : String(Math.round(v)),
@@ -154,5 +186,5 @@
     eur: v => v == null ? '—' : (v < 0 ? '−' : '') + '€' + Math.abs(v).toFixed(2)
   };
 
-  return { THEMES, buildSnapshot, score, rank, realityCheck, newAccount, buy, sell, valueOf, stats, fmt, FRICTION, clamp };
+  return { THEMES, steadiness, monthlyConsistency, buildSnapshot, score, rank, realityCheck, newAccount, buy, sell, valueOf, stats, fmt, FRICTION, clamp };
 });

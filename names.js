@@ -34,7 +34,12 @@
     ['MP','MP Materials','Rare earth magnets'],['ENVX','Enovix','Batteries'],['AMPX','Amprius Technologies','Batteries'],['SLDP','Solid Power','Solid-state batteries'],['SES','SES AI','Batteries'],
     ['SG','Sweetgreen','Salad restaurants'],['ONON','On Holding','Running shoes (Switzerland)'],['YETI','Yeti','Coolers, outdoor gear'],['ELF','e.l.f. Beauty','Makeup'],['CAVA','Cava Group','Mediterranean restaurants'],
     ['BROS','Dutch Bros','Coffee drive-thrus'],['DAVE','Dave Inc','Small cash advances app'],['LMND','Lemonade','Insurance app'],['ROOT','Root Inc','Car insurance'],['OPEN','Opendoor','Home buying'],
-    ['TOST','Toast','Restaurant software'],['SMAR','Smartsheet','Work software'],['ASAN','Asana','Work software'],['U','Unity Software','Game engine'],['PINS','Pinterest','Image search']
+    ['TOST','Toast','Restaurant software'],['SMAR','Smartsheet','Work software'],['ASAN','Asana','Work software'],['U','Unity Software','Game engine'],['PINS','Pinterest','Image search'],
+    ['CORZ','Core Scientific','AI + bitcoin data centres'],['AAOI','Applied Optoelectronics','Data-centre lasers'],['LASR','nLight','Industrial lasers'],['CLS','Celestica','AI hardware maker'],['ZETA','Zeta Global','Marketing software'],['SMTC','Semtech','Chips'],
+    ['ARRY','Array Technologies','Solar trackers'],['SHLS','Shoals Technologies','Solar parts'],['OPAL','OPAL Fuels','Biogas fuel'],['STEM','Stem Inc','Energy storage software'],['FREY','FREYR Battery','Batteries'],['SMMT','Summit Therapeutics','Cancer drug'],
+    ['CELC','Celcuity','Cancer drug'],['ACLX','Arcellx','Cell therapy'],['TVTX','Travere Therapeutics','Rare disease drugs'],['IMNM','Immunome','Cancer medicine'],['LOVE','Lovesac','Furniture'],['VITL','Vital Farms','Pasture-raised eggs'],
+    ['KRUS','Kura Sushi USA','Sushi restaurants'],['SHAK','Shake Shack','Burger restaurants'],['PAYO','Payoneer','Cross-border payments'],['FOUR','Shift4 Payments','Payments'],['MQ','Marqeta','Card payments tech'],['FLYW','Flywire','Payments'],
+    ['LC','LendingClub','Online lender'],['CRCL','Circle Internet','Stablecoin issuer'],['SIDU','Sidus Space','Space hardware'],['MNTS','Momentus','Space transport'],['QMCO','Quantum Corp','Data storage']
   ].map(r => ({ symbol: r[0], name: r[1], about: r[2] }));
   const norm = s => String(s).toLowerCase().replace(/[^a-z0-9 ]/g, '');
   function search(q, limit) {

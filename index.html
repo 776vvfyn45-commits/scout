@@ -169,7 +169,7 @@ const LS = {
 
 /* ---------------- state ---------------- */
 const S = {
-  key: LS.get('scout_key', ''), tab: 'radar', theme: 'small', results: [], scanning: false, scanId: 0, filter: 'all', progress: 0, progressTxt: '',
+  key: LS.get('scout_key', ''), tdKey: LS.get('scout_td', ''), tab: 'radar', theme: 'small', results: [], scanning: false, scanId: 0, filter: 'all', progress: 0, progressTxt: '',
   watch: LS.get('scout_watch', []), fx: LS.get('scout_fx', { rate: 0.92, t: 0, approx: true }),
   acc: LS.get('scout_paper', null), snaps: {}, query: ''
 };
@@ -249,6 +249,7 @@ function errMsg(e) {
 /* ---------------- rendering helpers ---------------- */
 function seg(n, cls) { let h = '<div class="seg ' + cls + '">'; const on = Math.round(n / 10); for (let i = 0; i < 10; i++) h += '<i class="' + (i < on ? 'on' : '') + '"></i>'; return h + '</div>'; }
 function pctCls(v) { return v == null ? '' : v >= 0 ? 'up' : 'dn'; }
+function steadyTag(s) { const st = Scout.steadiness(s); return st.label === 'STEADY' ? '<span class="tag" style="border-color:#1f5c46;color:var(--up);background:rgba(62,207,142,.08)">★ STEADY CLIMB</span>' : st.label === 'CHOPPY' ? '<span class="tag n">Choppy</span>' : ''; }
 function cardHtml(r) {
   const s = r.s;
   return '<button class="card r-' + r.riskTier + '" data-sym="' + esc(s.symbol) + '">' +
@@ -256,7 +257,7 @@ function cardHtml(r) {
     '<div class="px">' + Scout.fmt.usd(s.price) + '<br><span class="' + pctCls(s.changePct) + '">' + Scout.fmt.pct(s.changePct) + '</span></div></div>' +
     '<div class="gauges"><div class="g"><b>MOMENTUM <span>' + r.radar + ' · ' + r.radarTier + '</span></b>' + seg(r.radar, 'rad') + '</div>' +
     '<div class="g"><b>RISK <span>' + r.risk + ' · ' + r.riskTier + '</span></b>' + seg(r.risk, 'rsk') + '</div></div>' +
-    (r.flags.length ? '<div class="tags">' + r.flags.slice(0, 3).map(f => '<span class="tag">' + esc(f[0]) + '</span>').join('') + '</div>' : '') +
+    '<div class="tags">' + steadyTag(r.s) + r.flags.slice(0, 3).map(f => '<span class="tag">' + esc(f[0]) + '</span>').join('') + '</div>' +
     '</button>';
 }
 
@@ -278,7 +279,7 @@ function renderRadar() {
   if (!live()) h += '<div class="banner"><b>DEMO MODE — SAMPLE DATA, NOT REAL.</b> Get a free key (2 minutes) to scan real companies: <a href="https://finnhub.io/register" target="_blank" rel="noopener noreferrer" style="color:var(--amber)">finnhub.io/register</a>, then paste it in SETUP.</div>';
   h += '<h2>Find a company</h2><div class="row"><input type="text" id="q" placeholder="Name or ticker, e.g. Tesla" autocomplete="off" autocorrect="off" value="' + esc(S.query) + '"><button class="btn primary" id="go">Go</button></div><div id="sug"></div>';
   h += '<h2>Explore small and growing companies</h2><div class="chips" id="themes">' + themes.map(k => '<button class="chip' + (S.theme === k ? ' on' : '') + '" data-k="' + k + '">' + Scout.THEMES[k].label.replace(/\b(\w)(\w*)/g, (m, a, b) => a + b.toLowerCase()).replace('Ai', 'AI') + '</button>').join('') + '</div>';
-  h += '<button class="btn primary block" id="scan"' + (S.scanning ? ' disabled' : '') + '>' + (S.scanning ? 'Scanning…' : 'Scan this list') + '</button>';
+  h += '<button class="btn primary block" id="scan"' + (S.scanning ? ' disabled' : '') + '>' + (S.scanning ? 'Scanning…' : (S.theme === 'wide' ? 'Scan all (takes several minutes)' : 'Scan this list')) + '</button>';
   h += '<div class="prog" id="prog" style="display:' + (S.scanning ? 'block' : 'none') + '"><i style="width:' + S.progress + '%"></i></div><div id="progTxt" style="font-family:var(--mono);font-size:.72rem;color:var(--dim);min-height:16px">' + esc(S.progressTxt) + '</div>';
   h += '<h2>Results</h2><div class="chips" id="filters">' + FILTERS.map(f => '<button class="chip' + (S.filter === f[0] ? ' on' : '') + '" data-f="' + f[0] + '">' + f[1] + '</button>').join('') + '</div>';
   h += '<div id="results">' + resultsHtml() + '</div><div style="color:var(--dim);font-size:.72rem;margin-top:4px">UP / DOWN = share price change, not company profit. Past moves do not predict the future.</div>' + browseHtml();
@@ -292,15 +293,16 @@ function renderRadar() {
   view.onclick = cardClick;
   $('#filters').onclick = e => { const b = e.target.closest('.chip'); if (b) { S.filter = b.dataset.f; document.querySelectorAll('#filters .chip').forEach(c => c.classList.toggle('on', c.dataset.f === S.filter)); $('#results').innerHTML = resultsHtml(); } };
 }
-const FILTERS = [['all', 'ALL'], ['micro', 'MICRO · under $300M'], ['smallc', 'SMALL · under $2B'], ['up', '▲ UP TODAY'], ['down', '▼ DOWN TODAY'], ['up3m', '▲ UP 3 MONTHS'], ['down3m', '▼ DOWN 3 MONTHS'], ['hot', 'HIGH MOMENTUM'], ['safer', 'LOWER RISK'], ['new', 'NEWLY LISTED']];
+const FILTERS = [['all', 'ALL'], ['micro', 'MICRO · under $300M'], ['smallc', 'SMALL · under $2B'], ['up', '▲ UP TODAY'], ['down', '▼ DOWN TODAY'], ['up3m', '▲ UP 3 MONTHS'], ['down3m', '▼ DOWN 3 MONTHS'], ['steady', '★ STEADY CLIMBERS'], ['hot', 'HIGH MOMENTUM'], ['safer', 'LOWER RISK'], ['new', 'NEWLY LISTED']];
 function applyFilter(list) {
   const f = S.filter, out = list.filter(r => ({
-    all: () => true, micro: () => r.s.mcapUsd != null && r.s.mcapUsd < 300e6, smallc: () => r.s.mcapUsd != null && r.s.mcapUsd < 2e9, up: () => r.s.changePct > 0, down: () => r.s.changePct < 0, up3m: () => r.s.ret13w > 0, down3m: () => r.s.ret13w < 0,
+    all: () => true, steady: () => Scout.steadiness(r.s).label === 'STEADY', micro: () => r.s.mcapUsd != null && r.s.mcapUsd < 300e6, smallc: () => r.s.mcapUsd != null && r.s.mcapUsd < 2e9, up: () => r.s.changePct > 0, down: () => r.s.changePct < 0, up3m: () => r.s.ret13w > 0, down3m: () => r.s.ret13w < 0,
     hot: () => r.radar >= 55, safer: () => r.risk < 50, new: () => r.age != null && r.age < 36
   }[f] || (() => true))());
   if (f === 'up' || f === 'down') out.sort((a, b) => f === 'up' ? b.s.changePct - a.s.changePct : a.s.changePct - b.s.changePct);
   if (f === 'up3m' || f === 'down3m') out.sort((a, b) => f === 'up3m' ? b.s.ret13w - a.s.ret13w : a.s.ret13w - b.s.ret13w);
   if (f === 'micro' || f === 'smallc') out.sort((a, b) => a.s.mcapUsd - b.s.mcapUsd);
+  if (f === 'steady') out.sort((a, b) => Scout.steadiness(b.s).pts - Scout.steadiness(a.s).pts || a.risk - b.risk);
   if (f === 'safer') out.sort((a, b) => a.risk - b.risk);
   return out;
 }
@@ -377,6 +379,7 @@ async function openDetail(sym) {
     '<div class="st"><small>Sales growth</small><b>' + Scout.fmt.pct(s.revGrowth) + '</b></div><div class="st"><small>Listed</small><b>' + esc(s.ipo || '—') + '</b></div></div>';
   if (s.industry) h += '<div style="color:var(--dim);font-size:.8rem">' + esc(s.industry) + (s.country ? ' · ' + esc(s.country) : '') + '</div>';
   h += '<h2>Why this momentum score</h2>' + r.parts.map(p => '<div class="brk"><span>' + p.k + '</span><div class="bar"><i style="width:' + Math.round(p.pts / p.max * 100) + '%"></i></div><span>' + p.pts + '/' + p.max + '</span></div><div style="color:var(--dim);font-size:.72rem;margin:-3px 0 4px 118px">' + esc(p.txt) + '</div>').join('');
+  h += steadyHtml(s) + '<div id="monthly"></div>';
   h += '<h2>Risks in plain words</h2>' + (r.flags.length ? r.flags.map(f => '<div class="flag"><b>' + esc(f[0]) + '</b>' + esc(f[1]) + '</div>').join('') : '<div class="note" style="border-color:var(--steel);background:var(--panel2);color:var(--dim)">No major red flags from the numbers we have. That does not make it safe — any stock can fall.</div>');
   h += r.notes.map(n => '<div class="note">' + esc(n) + '</div>').join('');
   h += whereToBuy(s);
@@ -392,7 +395,31 @@ async function openDetail(sym) {
     window.open(b.dataset.open, '_blank', 'noopener');
   });
   $('#pane').querySelectorAll('[data-buy]').forEach(b => b.onclick = () => paperBuy(sym, s, parseFloat(b.dataset.buy)));
-  if (live()) loadNews(sym);
+  if (live()) { loadNews(sym); loadMonthly(sym); }
+}
+function steadyHtml(s) {
+  const st = Scout.steadiness(s), col = st.label === 'STEADY' ? 'var(--up)' : st.label === 'MIXED' ? 'var(--amber)' : 'var(--down)';
+  return '<h2>How steady has it been?</h2><div class="card" style="cursor:default"><div class="row" style="justify-content:space-between"><b style="color:' + col + ';font-size:1.05rem">' + st.label + '</b><span class="nm">score ' + st.pts + '/10</span></div>' + st.why.map(w => '<div style="color:var(--dim);font-size:.82rem;margin-top:5px">• ' + esc(w) + '</div>').join('') + '<div style="color:var(--dim);font-size:.72rem;margin-top:8px">Based on 1-week, 3-month and 6-month price changes. Past steadiness does not promise future profit.</div></div>';
+}
+/* optional exact month-by-month check via Twelve Data (free key, 8 calls/min) */
+let tdNext = 0;
+async function loadMonthly(sym) {
+  const box = $('#monthly'); if (!box || !S.tdKey) { if (box && live()) box.innerHTML = '<div class="note" style="border-color:var(--steel);background:var(--panel2);color:var(--dim)">Want the exact month-by-month record (last 6 months)? Add a free Twelve Data key in SETUP.</div>'; return; }
+  box.innerHTML = '<div class="nm" style="max-width:none">Loading month-by-month record…</div>';
+  try {
+    let c = cget('td:' + sym, 24 * 3600e3);
+    if (!c) {
+      const wait = Math.max(0, tdNext - Date.now()); tdNext = Math.max(Date.now(), tdNext) + 7800; if (wait) await sleep(wait);
+      const r = await fetch('https://api.twelvedata.com/time_series?' + new URLSearchParams({ symbol: sym, interval: '1month', outputsize: '7', apikey: S.tdKey }));
+      const j = await r.json(); if (!j || !j.values) throw new Error(j && j.message ? j.message : 'no data');
+      c = j.values.map(v => parseFloat(v.close)).reverse(); cset('td:' + sym, c);
+    }
+    const mc = Scout.monthlyConsistency(c); if (!mc) { box.innerHTML = ''; return; }
+    const col = mc.label === 'CONSISTENT' ? 'var(--up)' : mc.label === 'MOSTLY UP' ? 'var(--amber)' : 'var(--down)';
+    box.innerHTML = '<div class="card" style="cursor:default"><div class="row" style="justify-content:space-between"><b style="color:' + col + '">' + mc.label + '</b><span class="nm">' + mc.pos + ' of ' + mc.total + ' months up</span></div>' +
+      '<div style="display:flex;gap:6px;align-items:flex-end;height:70px;margin-top:10px">' + mc.rets.map(x => { const h = Math.max(6, Math.min(64, Math.abs(x) * 3)); return '<div style="flex:1;text-align:center"><div style="height:' + h + 'px;background:' + (x >= 0 ? 'var(--up)' : 'var(--down)') + ';border-radius:4px;margin-top:' + (64 - h) + 'px"></div></div>'; }).join('') + '</div>' +
+      '<div style="display:flex;gap:6px;margin-top:4px">' + mc.rets.map(x => '<div style="flex:1;text-align:center;font-family:var(--mono);font-size:.62rem;color:var(--dim)">' + (x >= 0 ? '+' : '') + x.toFixed(0) + '%</div>').join('') + '</div><div style="color:var(--dim);font-size:.72rem;margin-top:8px">Each bar = one month, oldest to newest. Worst month: ' + mc.worst.toFixed(1) + '%.</div></div>';
+  } catch (e) { box.innerHTML = '<div class="nm" style="max-width:none">Month-by-month data unavailable (' + esc(String(e.message || e)).slice(0, 80) + ').</div>'; }
 }
 function whereToBuy(s) {
   const w = Brokers.forStock(s), lbl = { likely: 'USUALLY OFFERED', verify: 'CHECK IN APP', unlikely: 'UNLIKELY' };
@@ -493,6 +520,7 @@ function renderSetup() {
   let h = '<h2>Live data</h2><div class="card" style="cursor:default"><div style="font-size:.86rem;line-height:1.5;color:var(--dim)">Scout uses <b style="color:var(--text)">Finnhub</b>, which offers a free key for personal use. Create a free account at finnhub.io, copy your API key, and paste it here. It is stored only on this device. Free data covers mainly <b style="color:var(--text)">US-listed</b> stocks (including big European companies that list in the US). It may be delayed, and the free plan limits how fast we can scan.</div>' +
     '<label class="l">Finnhub API key</label><input type="password" id="key" placeholder="paste key here" value="' + esc(S.key) + '" autocomplete="off">' +
     '<div class="row" style="margin-top:10px"><button class="btn primary" id="ks">Save &amp; test</button><button class="btn" id="kc">Remove key</button></div></div>';
+  h += '<h2>Month-by-month check (optional)</h2><div class="card" style="cursor:default"><div style="font-size:.84rem;line-height:1.5;color:var(--dim)">For the exact record of the last 6 months, create a free key at <a href="https://twelvedata.com/register" target="_blank" rel="noopener noreferrer" style="color:var(--amber)">twelvedata.com</a> and paste it here. Only used when you open a company.</div><label class="l">Twelve Data key</label><input type="password" id="tdkey" value="' + esc(S.tdKey) + '" autocomplete="off"><div class="row" style="margin-top:10px"><button class="btn" id="tds">Save</button></div></div>';
   h += '<h2>Status</h2><div class="card" style="cursor:default"><div class="kv"><span>Mode</span><span>' + (live() ? 'LIVE' : 'DEMO (sample data)') + '</span></div><div class="kv"><span>USD→EUR</span><span>' + S.fx.rate.toFixed(4) + (S.fx.approx ? ' (approx.)' : '') + '</span></div><div class="kv"><span>Watchlist</span><span>' + S.watch.length + '</span></div></div>';
   h += '<div class="row" style="margin-top:10px"><button class="btn block" id="cc">Clear cached data</button></div>';
   h += '<h2>How to read the scores</h2><div class="card" style="cursor:default;font-size:.84rem;line-height:1.55;color:var(--dim)"><b style="color:var(--amber)">MOMENTUM (0–100)</b> adds up momentum, closeness to the yearly high, a surge in trading volume, sales growth and how newly listed the company is. It measures <i>attention and trend</i>, not value.<br><br><b style="color:#ff9d96">RISK (0–100)</b> adds up warning signs: tiny company size, thin trading, wild yearly range, a huge recent run-up, a very new listing, high volatility, falling sales and missing data.<br><br>High momentum with high risk is exactly the profile of both lottery wins and big losses. Neither score is a prediction or advice. Always do your own research and use a licensed broker.</div>';
@@ -503,6 +531,7 @@ function renderSetup() {
     try { nextAt = 0; const q = await fh('/quote', { symbol: 'AAPL' }); if (q && q.c) { LS.set('scout_key', k); toast('Key works — LIVE mode on.'); render(); } else { S.key = LS.get('scout_key', ''); toast('Key answered but returned no data.'); } }
     catch (e) { S.key = LS.get('scout_key', ''); toast(errMsg(e), 5000); render(); }
   };
+  $('#tds').onclick = () => { S.tdKey = $('#tdkey').value.trim(); LS.set('scout_td', S.tdKey); toast(S.tdKey ? 'Saved.' : 'Removed.'); };
   $('#kc').onclick = () => { S.key = ''; try { localStorage.removeItem('scout_key'); } catch (e) {} S.results = []; toast('Key removed — DEMO mode.'); render(); };
   $('#cc').onclick = () => { Object.keys(cache).forEach(k => delete cache[k]); LS.set('scout_cache', cache); S.snaps = {}; toast('Cache cleared.'); };
 }

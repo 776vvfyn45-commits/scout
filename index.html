@@ -162,7 +162,7 @@ const LS = {
 
 /* ---------------- state ---------------- */
 const S = {
-  key: LS.get('scout_key', ''), tab: 'radar', theme: 'popular', results: [], scanning: false, scanId: 0, progress: 0, progressTxt: '',
+  key: LS.get('scout_key', ''), tab: 'radar', theme: 'popular', results: [], scanning: false, scanId: 0, filter: 'all', progress: 0, progressTxt: '',
   watch: LS.get('scout_watch', []), fx: LS.get('scout_fx', { rate: 0.92, t: 0, approx: true }),
   acc: LS.get('scout_paper', null), snaps: {}, query: ''
 };
@@ -182,6 +182,17 @@ const DEMO = [
   ['ORBT', 'Orbit Launch (sample)', 5.1, 19.8, 260, 5.3, .7, 6.2, .3, 90e6, 0, 3.1, '2026-06-10']
 ].map(r => ({ symbol: r[0], name: r[1], price: r[2], changePct: r[3], ret5d: r[3] * 1.4, ret13w: r[4], ret26w: r[4] * 1.3, retYtd: r[4] * 1.5, hi52: r[5], lo52: r[6],
   avgVol10: r[7] * r[8] * 1e6, avgVol3m: r[8] * 1e6, mcapUsd: r[9], revGrowth: r[10], beta: r[11], ipo: r[12], industry: 'Sample sector', country: 'XX', exchange: 'NASDAQ' }));
+
+(function () {   // sample data for every listed company, so demo mode shows a full list. NOT real prices.
+  function rng(seed) { let h = 2166136261; for (let i = 0; i < seed.length; i++) { h ^= seed.charCodeAt(i); h = Math.imul(h, 16777619); } return () => { h ^= h << 13; h ^= h >>> 17; h ^= h << 5; return ((h >>> 0) % 100000) / 100000; }; }
+  Names.LIST.forEach(d => {
+    if (DEMO.find(x => x.symbol === d.symbol)) return;
+    const r = rng(d.symbol), price = 4 + r() * r() * 300, r13 = -45 + r() * 250, chg = -6 + r() * 14, lo = price / (1.2 + r() * 4), hi = price * (1 + r() * .5);
+    const mc = Math.pow(10, 8 + r() * 3.6), vol = 0.3 + r() * 20, ipoY = 2008 + Math.floor(r() * 19);
+    DEMO.push({ symbol: d.symbol, name: d.name + ' (sample)', price, changePct: chg, ret5d: chg * 1.3, ret13w: r13, ret26w: r13 * 1.2, retYtd: r13 * 1.4 - 10, hi52: hi, lo52: lo,
+      avgVol10: vol * (0.6 + r() * 1.6) * 1e6, avgVol3m: vol * 1e6, mcapUsd: mc, revGrowth: -15 + r() * 120, beta: .7 + r() * 2.6, ipo: ipoY + '-0' + (1 + Math.floor(r() * 9)) + '-15', industry: d.about, country: 'XX', exchange: 'NASDAQ' });
+  });
+})();
 
 /* ---------------- Finnhub client: rate-limited + cached ---------------- */
 const API = 'https://finnhub.io/api/v1';
@@ -262,9 +273,8 @@ function renderRadar() {
   h += '<h2>Scan a theme</h2><div class="chips" id="themes">' + themes.map(k => '<button class="chip' + (S.theme === k ? ' on' : '') + '" data-k="' + k + '">' + Scout.THEMES[k].label + '</button>').join('') + '</div>';
   h += '<button class="btn primary block" id="scan"' + (S.scanning ? ' disabled' : '') + '>' + (S.scanning ? 'Scanning…' : 'Scan ' + Scout.THEMES[S.theme].label) + '</button>';
   h += '<div class="prog" id="prog" style="display:' + (S.scanning ? 'block' : 'none') + '"><i style="width:' + S.progress + '%"></i></div><div id="progTxt" style="font-family:var(--mono);font-size:.72rem;color:var(--dim);min-height:16px">' + esc(S.progressTxt) + '</div>';
-  h += '<h2>Results · best radar first</h2><div id="results">' + (S.results.length ? S.results.map(cardHtml).join('') :
-    '<div class="empty">Pick a theme and tap SCAN.<br>RADAR = how much is happening.<br>RISK = how easily it could go wrong.<br>High on both is where big wins <i>and</i> big losses live.</div>' +
-    '') + '</div>' + browseHtml();
+  h += '<h2>Results</h2><div class="chips" id="filters">' + FILTERS.map(f => '<button class="chip' + (S.filter === f[0] ? ' on' : '') + '" data-f="' + f[0] + '">' + f[1] + '</button>').join('') + '</div>';
+  h += '<div id="results">' + resultsHtml() + '</div><div style="color:var(--dim);font-size:.72rem;margin-top:4px">UP / DOWN = share price change, not company profit. Past moves do not predict the future.</div>' + browseHtml();
   view.innerHTML = h;
   $('#go').onclick = () => lookup($('#q').value);
   $('#q').onkeydown = e => { if (e.key === 'Enter') lookup($('#q').value); };
@@ -273,6 +283,23 @@ function renderRadar() {
   $('#themes').onclick = e => { const b = e.target.closest('.chip'); if (b) { S.theme = b.dataset.k; S.results = []; renderRadar(); } };
   $('#scan').onclick = scan;
   view.onclick = cardClick;
+  $('#filters').onclick = e => { const b = e.target.closest('.chip'); if (b) { S.filter = b.dataset.f; document.querySelectorAll('#filters .chip').forEach(c => c.classList.toggle('on', c.dataset.f === S.filter)); $('#results').innerHTML = resultsHtml(); } };
+}
+const FILTERS = [['all', 'ALL'], ['up', '▲ UP TODAY'], ['down', '▼ DOWN TODAY'], ['up3m', '▲ UP 3 MONTHS'], ['down3m', '▼ DOWN 3 MONTHS'], ['hot', 'HIGH RADAR'], ['safer', 'LOWER RISK'], ['new', 'NEWLY LISTED']];
+function applyFilter(list) {
+  const f = S.filter, out = list.filter(r => ({
+    all: () => true, up: () => r.s.changePct > 0, down: () => r.s.changePct < 0, up3m: () => r.s.ret13w > 0, down3m: () => r.s.ret13w < 0,
+    hot: () => r.radar >= 55, safer: () => r.risk < 50, new: () => r.age != null && r.age < 36
+  }[f] || (() => true))());
+  if (f === 'up' || f === 'down') out.sort((a, b) => f === 'up' ? b.s.changePct - a.s.changePct : a.s.changePct - b.s.changePct);
+  if (f === 'up3m' || f === 'down3m') out.sort((a, b) => f === 'up3m' ? b.s.ret13w - a.s.ret13w : a.s.ret13w - b.s.ret13w);
+  if (f === 'safer') out.sort((a, b) => a.risk - b.risk);
+  return out;
+}
+function resultsHtml() {
+  if (!S.results.length) return '<div class="empty">' + (S.scanning ? 'Scanning…' : 'Pick a theme and tap SCAN.<br>RADAR = how much is happening.<br>RISK = how easily it could go wrong.') + '</div>';
+  const l = applyFilter(S.results);
+  return l.length ? l.map(cardHtml).join('') : '<div class="empty">None match this filter. Try ALL.</div>';
 }
 function cardClick(e) {
   const p = e.target.closest('[data-pick]'); if (p) { lookup(p.dataset.pick); return; }
@@ -281,7 +308,6 @@ function cardClick(e) {
 const STARTER_T = ['NVDA', 'TSLA', 'PLTR', 'RKLB', 'OKLO', 'IONQ', 'HOOD', 'SOFI', 'DUOL', 'SMCI', 'LLY', 'COIN'].map(t => Names.LIST.find(d => d.symbol === t)).filter(Boolean);
 function starters() { return live() ? STARTER_T : DEMO.map(d => ({ symbol: d.symbol, name: d.name, about: 'Sample company — demo only' })); }
 function browseHtml() {
-  if (!live()) return '<h2>Sample companies · tap one</h2>' + starters().map(sugRow).join('');
   return '<h2>Browse companies by theme</h2>' + Object.keys(Scout.THEMES).map(k => {
     const rows = Scout.THEMES[k].syms.map(sy => Names.LIST.find(d => d.symbol === sy)).filter(Boolean);
     return '<div style="font-family:var(--head);letter-spacing:.12em;color:var(--text);font-size:.85rem;margin:14px 0 6px;border-bottom:1px solid var(--line);padding-bottom:4px">' + Scout.THEMES[k].label + '</div>' + rows.map(sugRow).join('');
@@ -300,7 +326,7 @@ async function lookup(raw) {
     if (!sn && live() && !hit) {                   // unknown name: ask Finnhub's search
       const r = await fh('/search', { q: raw }); const c = r && r.result && r.result.find(x => x.type === 'Common Stock' && x.symbol && !x.symbol.includes('.')); if (c) { sym = c.symbol; sn = await getSnap(sym); }
     }
-    if (!sn && !live()) { toast('Demo mode only has 6 sample companies. Add a free Finnhub key in SETUP to look up real ones.', 6000); return; }
+    if (!sn && !live()) { toast('Demo mode has sample data only. Add a free Finnhub key in SETUP to look up real ones.', 6000); return; }
     if (!sn) { toast('Nothing found for “' + raw + '”. Try the ticker, or tap one of the suggestions.', 5000); return; }
     S.snaps[sym] = sn; toast('Found ' + sym, 800); openDetail(sym);
   } catch (e) { toast(errMsg(e), 5000); }
@@ -315,7 +341,7 @@ async function scan() {
   try {
     for (const sym of syms) {
       if (id !== S.scanId) return;
-      try { const sn = await getSnap(sym); if (sn) { snaps.push(sn); S.results = Scout.rank(snaps); const r = $('#results'); if (r && S.tab === 'radar') r.innerHTML = S.results.map(cardHtml).join(''); } }
+      try { const sn = await getSnap(sym); if (sn) { snaps.push(sn); S.results = Scout.rank(snaps); const r = $('#results'); if (r && S.tab === 'radar') r.innerHTML = resultsHtml(); } }
       catch (e) { if (e.message === 'KEY' || e.message === 'NET') throw e; }
       done++; tick(); if (!live()) await sleep(120);
     }

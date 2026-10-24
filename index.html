@@ -162,7 +162,7 @@ const LS = {
 
 /* ---------------- state ---------------- */
 const S = {
-  key: LS.get('scout_key', ''), tab: 'radar', theme: 'ai', results: [], scanning: false, scanId: 0, progress: 0, progressTxt: '',
+  key: LS.get('scout_key', ''), tab: 'radar', theme: 'popular', results: [], scanning: false, scanId: 0, progress: 0, progressTxt: '',
   watch: LS.get('scout_watch', []), fx: LS.get('scout_fx', { rate: 0.92, t: 0, approx: true }),
   acc: LS.get('scout_paper', null), snaps: {}, query: ''
 };
@@ -264,7 +264,7 @@ function renderRadar() {
   h += '<div class="prog" id="prog" style="display:' + (S.scanning ? 'block' : 'none') + '"><i style="width:' + S.progress + '%"></i></div><div id="progTxt" style="font-family:var(--mono);font-size:.72rem;color:var(--dim);min-height:16px">' + esc(S.progressTxt) + '</div>';
   h += '<h2>Results · best radar first</h2><div id="results">' + (S.results.length ? S.results.map(cardHtml).join('') :
     '<div class="empty">Pick a theme and tap SCAN.<br>RADAR = how much is happening.<br>RISK = how easily it could go wrong.<br>High on both is where big wins <i>and</i> big losses live.</div>' +
-    '<h2>Not sure where to start? Tap one</h2>' + starters().map(sugRow).join('')) + '</div>';
+    '') + '</div>' + browseHtml();
   view.innerHTML = h;
   $('#go').onclick = () => lookup($('#q').value);
   $('#q').onkeydown = e => { if (e.key === 'Enter') lookup($('#q').value); };
@@ -272,7 +272,7 @@ function renderRadar() {
   $('#sug').onclick = e => { const r = e.target.closest('[data-pick]'); if (r) { $('#sug').innerHTML = ''; lookup(r.dataset.pick); } };
   $('#themes').onclick = e => { const b = e.target.closest('.chip'); if (b) { S.theme = b.dataset.k; S.results = []; renderRadar(); } };
   $('#scan').onclick = scan;
-  $('#results').onclick = cardClick;
+  view.onclick = cardClick;
 }
 function cardClick(e) {
   const p = e.target.closest('[data-pick]'); if (p) { lookup(p.dataset.pick); return; }
@@ -280,6 +280,13 @@ function cardClick(e) {
 }
 const STARTER_T = ['NVDA', 'TSLA', 'PLTR', 'RKLB', 'OKLO', 'IONQ', 'HOOD', 'SOFI', 'DUOL', 'SMCI', 'LLY', 'COIN'].map(t => Names.LIST.find(d => d.symbol === t)).filter(Boolean);
 function starters() { return live() ? STARTER_T : DEMO.map(d => ({ symbol: d.symbol, name: d.name, about: 'Sample company — demo only' })); }
+function browseHtml() {
+  if (!live()) return '<h2>Sample companies · tap one</h2>' + starters().map(sugRow).join('');
+  return '<h2>Browse companies by theme</h2>' + Object.keys(Scout.THEMES).map(k => {
+    const rows = Scout.THEMES[k].syms.map(sy => Names.LIST.find(d => d.symbol === sy)).filter(Boolean);
+    return '<div style="font-family:var(--head);letter-spacing:.12em;color:var(--text);font-size:.85rem;margin:14px 0 6px;border-bottom:1px solid var(--line);padding-bottom:4px">' + Scout.THEMES[k].label + '</div>' + rows.map(sugRow).join('');
+  }).join('');
+}
 function sugRow(d) { return '<button class="card" data-pick="' + esc(d.symbol) + '" style="padding:10px 12px"><div class="l1"><div><span class="sym" style="font-size:1.1rem">' + esc(d.symbol) + '</span> <span style="color:var(--text)">' + esc(d.name) + '</span></div><span style="color:var(--amber)">›</span></div><div class="nm" style="max-width:none">' + esc(d.about) + '</div></button>'; }
 function showSug(q) { const box = $('#sug'); if (!box) return; const r = Names.search(q, 6); box.innerHTML = r.length ? '<div style="margin:6px 0">' + r.map(sugRow).join('') + '</div>' : (q.trim().length > 1 ? '<div class="nm" style="max-width:none;margin:6px 2px">No match in our list. Press Go to try it as a ticker' + (live() ? ' or a name' : ' (live mode searches more)') + '.</div>' : ''); }
 
@@ -471,6 +478,7 @@ $('#tabs').onclick = e => { const b = e.target.closest('button'); if (b) setTab(
 if (!LS.get('scout_ack', false)) { $('#gate').style.display = 'flex'; $('#gateOk').onclick = () => { LS.set('scout_ack', true); $('#gate').style.display = 'none'; }; }
 getFx().catch(() => {});
 render();
+setTimeout(() => { if (S.tab === 'radar' && !S.results.length && !S.scanning) scan(); }, 400);
 if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
 })();
 </script>

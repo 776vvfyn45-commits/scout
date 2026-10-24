@@ -24,7 +24,17 @@
     ['UL','Unilever','Consumer goods (UK)'],['ON','ON Semiconductor','Chips'],['DUOL','Duolingo','Language app'],['DIS','Disney','Media, parks'],['NKE','Nike','Sportswear'],['KO','Coca-Cola','Drinks'],
     ['JPM','JPMorgan Chase','Bank'],['V','Visa','Payments'],['MA','Mastercard','Payments'],['PYPL','PayPal','Payments'],['SHOP','Shopify','Online shops'],['UBER','Uber','Rides'],['ABNB','Airbnb','Stays'],
     ['RBLX','Roblox','Games'],['SNOW','Snowflake','Data cloud'],['NET','Cloudflare','Internet security'],['DDOG','Datadog','Software monitoring'],['RDDT','Reddit','Social media'],['CELH','Celsius Holdings','Energy drinks'],
-    ['XOM','Exxon Mobil','Oil'],['BA','Boeing','Aircraft'],['F','Ford','Cars'],['GM','General Motors','Cars'],['RIVN','Rivian','Electric trucks'],['LCID','Lucid','Electric cars'],['NIO','NIO','Chinese electric cars']
+    ['XOM','Exxon Mobil','Oil'],['BA','Boeing','Aircraft'],['F','Ford','Cars'],['GM','General Motors','Cars'],['RIVN','Rivian','Electric trucks'],['LCID','Lucid','Electric cars'],['NIO','NIO','Chinese electric cars'],
+    ['BBAI','BigBear.ai','AI for defence'],['SERV','Serve Robotics','Sidewalk delivery robots'],['RR','Richtech Robotics','Service robots'],['NVTS','Navitas Semiconductor','Power chips'],['AEHR','Aehr Test Systems','Chip testing'],
+    ['LAES','SEALSQ','Secure chips, quantum-safe'],['WULF','TeraWulf','Bitcoin mining, AI hosting'],['CIFR','Cipher Mining','Bitcoin mining, AI hosting'],['IREN','IREN','AI data centres'],['APLD','Applied Digital','AI data centres'],
+    ['OUST','Ouster','Lidar sensors'],['INDI','indie Semiconductor','Car chips'],['MVIS','MicroVision','Lidar sensors'],['RZLV','Rezolve AI','Shopping AI'],['SPCE','Virgin Galactic','Space tourism'],
+    ['BKSY','BlackSky','Satellite images'],['SATL','Satellogic','Earth-watching satellites'],['ONDS','Ondas Holdings','Drones, networks'],['RCAT','Red Cat Holdings','Military drones'],['UMAC','Unusual Machines','Drone parts'],
+    ['DPRO','Draganfly','Drones'],['BEAM','Beam Therapeutics','Gene editing'],['SANA','Sana Biotechnology','Cell therapy'],['TARS','Tarsus Pharmaceuticals','Eye medicine'],['TMDX','TransMedics','Organ transport'],
+    ['NXE','NexGen Energy','Uranium mining'],['DNN','Denison Mines','Uranium mining'],['UUUU','Energy Fuels','Uranium, rare earths'],['ASPI','ASP Isotopes','Isotopes for nuclear + medicine'],['LTBR','Lightbridge','Nuclear fuel design'],
+    ['MP','MP Materials','Rare earth magnets'],['ENVX','Enovix','Batteries'],['AMPX','Amprius Technologies','Batteries'],['SLDP','Solid Power','Solid-state batteries'],['SES','SES AI','Batteries'],
+    ['SG','Sweetgreen','Salad restaurants'],['ONON','On Holding','Running shoes (Switzerland)'],['YETI','Yeti','Coolers, outdoor gear'],['ELF','e.l.f. Beauty','Makeup'],['CAVA','Cava Group','Mediterranean restaurants'],
+    ['BROS','Dutch Bros','Coffee drive-thrus'],['DAVE','Dave Inc','Small cash advances app'],['LMND','Lemonade','Insurance app'],['ROOT','Root Inc','Car insurance'],['OPEN','Opendoor','Home buying'],
+    ['TOST','Toast','Restaurant software'],['SMAR','Smartsheet','Work software'],['ASAN','Asana','Work software'],['U','Unity Software','Game engine'],['PINS','Pinterest','Image search']
   ].map(r => ({ symbol: r[0], name: r[1], about: r[2] }));
   const norm = s => String(s).toLowerCase().replace(/[^a-z0-9 ]/g, '');
   function search(q, limit) {

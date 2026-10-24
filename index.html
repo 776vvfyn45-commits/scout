@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#0b0d0f">
+<meta name="theme-color" content="#0e131a">
 <meta name="description" content="Scout — a market radar for spotting new and fast-growing companies, with the risks shown next to the hype. Information only, not financial advice.">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -12,112 +12,119 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icon-32.png">
 <link rel="apple-touch-icon" href="icon-180.png">
-<title>SCOUT — Market Radar</title>
+<title>Scout — Small-company finder</title>
 <style>
   :root{
-    --bg:#0b0d0f; --panel:#13171b; --panel2:#1a2025; --steel:#2b333a; --line:#252c32;
-    --text:#e8ebee; --dim:#8b96a1; --amber:#f5a524; --amber2:#ffbf4d; --up:#3ddc84; --down:#ff5a4f; --blue:#5aa9ff;
-    --head:"Bahnschrift","Barlow Condensed","Roboto Condensed","Arial Narrow","Helvetica Neue",Impact,sans-serif;
-    --body:"Segoe UI","Inter",system-ui,-apple-system,Roboto,sans-serif;
+    --bg:#0e131a; --panel:#161d27; --panel2:#1c2531; --steel:#2a3544; --line:#202b38;
+    --text:#e9eef5; --dim:#8a97a8; --amber:#d9a441; --amber2:#e8bd6a; --up:#3ecf8e; --down:#f2706b; --blue:#6aa8ff;
+    --head:"Segoe UI Semibold","Segoe UI",Inter,system-ui,-apple-system,Roboto,sans-serif;
+    --body:"Segoe UI",Inter,system-ui,-apple-system,Roboto,sans-serif;
     --mono:"Cascadia Mono","SF Mono",Consolas,Menlo,monospace;
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-  html,body{margin:0;background:var(--bg);color:var(--text);font-family:var(--body);font-size:15px;overscroll-behavior:none}
-  body{background:
-    repeating-linear-gradient(45deg,rgba(255,255,255,.012) 0 2px,transparent 2px 4px),
-    radial-gradient(900px 400px at 100% -10%,rgba(245,165,36,.07),transparent 60%),var(--bg);min-height:100dvh}
+  html,body{margin:0;background:var(--bg);color:var(--text);font-family:var(--body);font-size:15px;overscroll-behavior:none;scroll-behavior:smooth}
+  body{background:radial-gradient(900px 420px at 80% -10%,rgba(106,168,255,.09),transparent 60%),radial-gradient(700px 360px at -10% 0%,rgba(217,164,65,.06),transparent 60%),var(--bg);min-height:100dvh}
   button{font-family:inherit;color:inherit}
-  .hazard{height:6px;background:repeating-linear-gradient(135deg,var(--amber) 0 10px,#0b0d0f 10px 20px)}
-  #app{max-width:640px;margin:0 auto;min-height:100dvh;display:flex;flex-direction:column;padding-bottom:calc(76px + env(safe-area-inset-bottom))}
-  .top{display:flex;align-items:center;justify-content:space-between;padding:calc(10px + env(safe-area-inset-top)) 16px 10px;background:linear-gradient(#0e1114,#0b0d0f);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5}
-  .logo{display:flex;align-items:center;gap:10px;font-family:var(--head);font-weight:800;font-size:1.55rem;letter-spacing:.14em;text-transform:uppercase}
-  .logo svg{width:28px;height:28px}
-  .logo small{display:block;font-size:.58rem;font-weight:600;letter-spacing:.22em;color:var(--dim);margin-top:-3px}
-  .pill{font-family:var(--mono);font-size:.68rem;padding:5px 9px;border:1px solid var(--steel);border-radius:3px;letter-spacing:.08em;text-transform:uppercase;color:var(--dim)}
-  .pill.live{color:var(--up);border-color:#1f5c3a}.pill.demo{color:var(--amber);border-color:#6b4a0f}
-  main{padding:14px 14px 20px;flex:1}
-  h2{font-family:var(--head);text-transform:uppercase;letter-spacing:.12em;font-size:.95rem;margin:18px 0 8px;color:var(--amber);font-weight:700}
+  .hazard{display:none}
+  #app{max-width:640px;margin:0 auto;min-height:100dvh;display:flex;flex-direction:column;padding-bottom:calc(78px + env(safe-area-inset-bottom))}
+  .top{display:flex;align-items:center;justify-content:space-between;padding:calc(12px + env(safe-area-inset-top)) 18px 12px;background:rgba(14,19,26,.82);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);position:sticky;top:0;z-index:5;border-bottom:1px solid var(--line)}
+  .logo{display:flex;align-items:center;gap:10px;font-family:var(--head);font-weight:700;font-size:1.3rem;letter-spacing:.04em}
+  .logo svg{width:30px;height:30px}
+  .logo small{display:block;font-size:.7rem;font-weight:500;letter-spacing:.04em;color:var(--dim);margin-top:-2px}
+  .pill{font-size:.7rem;padding:5px 11px;border:1px solid var(--steel);border-radius:999px;letter-spacing:.06em;color:var(--dim);font-weight:600}
+  .pill.live{color:var(--up);border-color:#1f5c46;background:rgba(62,207,142,.08)}.pill.demo{color:var(--amber);border-color:#6b5320;background:rgba(217,164,65,.08)}
+  main{padding:16px 16px 22px;flex:1;animation:fade .25s ease-out}
+  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  h2{font-family:var(--head);font-size:1rem;margin:22px 0 10px;color:var(--text);font-weight:700;letter-spacing:.01em}
   h2:first-child{margin-top:4px}
-  .banner{border:1px solid #6b4a0f;background:rgba(245,165,36,.07);color:var(--amber2);padding:10px 12px;border-radius:3px;font-size:.8rem;line-height:1.45;margin-bottom:12px}
-  .banner.red{border-color:#6a2420;background:rgba(255,90,79,.07);color:#ff9d96}
+  .banner{border:1px solid #5d4a20;background:rgba(217,164,65,.08);color:var(--amber2);padding:12px 14px;border-radius:12px;font-size:.82rem;line-height:1.5;margin-bottom:14px}
+  .banner.red{border-color:#6a2d2a;background:rgba(242,112,107,.08);color:#f6a09c}
   .row{display:flex;gap:8px;align-items:center}
-  input[type=text],input[type=password],input[type=number]{width:100%;background:var(--panel);border:1px solid var(--steel);color:var(--text);padding:12px 12px;border-radius:3px;font-family:var(--mono);font-size:.95rem;text-transform:none;outline:none}
-  input:focus{border-color:var(--amber)}
-  .btn{background:var(--panel2);border:1px solid var(--steel);border-radius:3px;padding:12px 14px;font-family:var(--head);font-weight:700;letter-spacing:.12em;text-transform:uppercase;font-size:.85rem;cursor:pointer;white-space:nowrap}
-  .btn:active{transform:translateY(1px)}
-  .btn.primary{background:var(--amber);border-color:var(--amber);color:#14100a;box-shadow:inset 0 -3px 0 rgba(0,0,0,.25)}
-  .btn.danger{border-color:#6a2420;color:#ff9d96}
+  input[type=text],input[type=password],input[type=number]{width:100%;background:var(--panel);border:1px solid var(--steel);color:var(--text);padding:13px 14px;border-radius:12px;font-family:var(--body);font-size:1rem;outline:none;transition:border-color .15s,box-shadow .15s}
+  input:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(106,168,255,.15)}
+  .btn{background:var(--panel2);border:1px solid var(--steel);border-radius:12px;padding:12px 16px;font-family:var(--head);font-weight:600;font-size:.88rem;cursor:pointer;white-space:nowrap;transition:transform .08s,background .15s}
+  .btn:active{transform:scale(.97)}
+  .btn.primary{background:linear-gradient(180deg,#e3b255,#cf9a35);border-color:#cf9a35;color:#1a1306}
+  .btn.danger{border-color:#6a2d2a;color:#f6a09c}
   .btn.block{width:100%}
-  .btn.small{padding:8px 10px;font-size:.74rem}
-  .btn[disabled]{opacity:.45}
-  .chips{display:flex;gap:6px;overflow-x:auto;padding:2px 0 10px;scrollbar-width:none}
+  .btn.small{padding:8px 12px;font-size:.78rem;border-radius:10px}
+  .btn[disabled]{opacity:.5}
+  .chips{display:flex;gap:7px;overflow-x:auto;padding:2px 0 10px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
   .chips::-webkit-scrollbar{display:none}
-  .chip{flex:0 0 auto;border:1px solid var(--steel);background:transparent;border-radius:2px;padding:7px 11px;font-family:var(--head);letter-spacing:.1em;font-weight:700;font-size:.75rem;text-transform:uppercase;color:var(--dim);cursor:pointer}
-  .chip.on{background:var(--amber);color:#14100a;border-color:var(--amber)}
-  .prog{height:6px;background:var(--panel2);border:1px solid var(--line);border-radius:1px;margin:10px 0;overflow:hidden}
-  .prog i{display:block;height:100%;width:0;background:repeating-linear-gradient(135deg,var(--amber) 0 8px,#c78312 8px 16px);transition:width .3s}
-  .card{background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--steel);border-radius:3px;padding:12px 12px 11px;margin-bottom:9px;cursor:pointer;display:block;width:100%;text-align:left}
-  .card.r-EXTREME{border-left-color:var(--down)}.card.r-HIGH{border-left-color:#ff9a3c}.card.r-MEDIUM{border-left-color:var(--amber)}.card.r-LOWER{border-left-color:var(--up)}
+  .chip{flex:0 0 auto;border:1px solid var(--steel);background:var(--panel);border-radius:999px;padding:8px 14px;font-family:var(--head);font-weight:600;font-size:.8rem;color:var(--dim);cursor:pointer;transition:all .15s}
+  .chip.on{background:var(--text);color:#0e131a;border-color:var(--text)}
+  .prog{height:5px;background:var(--panel2);border-radius:999px;margin:12px 0;overflow:hidden}
+  .prog i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--blue),var(--amber));border-radius:999px;transition:width .3s}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:10px;cursor:pointer;display:block;width:100%;text-align:left;transition:transform .12s,border-color .15s,background .15s;box-shadow:0 1px 0 rgba(255,255,255,.03) inset}
+  .card:active{transform:scale(.99);background:var(--panel2)}
+  .card.r-EXTREME,.card.r-HIGH,.card.r-MEDIUM,.card.r-LOWER{border-left:3px solid var(--steel)}
+  .card.r-EXTREME{border-left-color:var(--down)}.card.r-HIGH{border-left-color:#f19a55}.card.r-MEDIUM{border-left-color:var(--amber)}.card.r-LOWER{border-left-color:var(--up)}
   .card .l1{display:flex;justify-content:space-between;gap:10px}
-  .sym{font-family:var(--head);font-weight:800;font-size:1.35rem;letter-spacing:.06em}
-  .nm{color:var(--dim);font-size:.76rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:46vw}
+  .sym{font-family:var(--head);font-weight:700;font-size:1.2rem;letter-spacing:.02em}
+  .nm{color:var(--dim);font-size:.78rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:46vw}
   .px{font-family:var(--mono);font-size:.95rem;text-align:right}
   .up{color:var(--up)}.dn{color:var(--down)}
-  .gauges{display:flex;gap:14px;margin-top:9px;align-items:center}
+  .gauges{display:flex;gap:16px;margin-top:11px;align-items:center}
   .g{flex:1}
-  .g b{font-family:var(--head);font-size:.68rem;letter-spacing:.16em;color:var(--dim);display:flex;justify-content:space-between;margin-bottom:3px;text-transform:uppercase}
-  .g b span{color:var(--text);font-family:var(--mono)}
-  .seg{display:grid;grid-template-columns:repeat(10,1fr);gap:2px;height:7px}
-  .seg i{background:var(--panel2);border-radius:1px}
-  .seg.rad i.on{background:var(--amber)}.seg.rsk i.on{background:#ff7a59}
-  .tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}
-  .tag{font-family:var(--mono);font-size:.62rem;border:1px solid #5a2a26;color:#ff9d96;padding:3px 6px;border-radius:2px;letter-spacing:.05em}
+  .g b{font-family:var(--body);font-size:.72rem;font-weight:600;color:var(--dim);display:flex;justify-content:space-between;margin-bottom:5px}
+  .g b span{color:var(--text);font-family:var(--mono);font-size:.7rem}
+  .seg{display:grid;grid-template-columns:repeat(10,1fr);gap:3px;height:6px}
+  .seg i{background:var(--panel2);border-radius:999px}
+  .seg.rad i.on{background:var(--blue)}.seg.rsk i.on{background:#f19a55}
+  .tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+  .tag{font-size:.68rem;border:1px solid #5a2f2c;color:#f6a09c;padding:3px 9px;border-radius:999px;background:rgba(242,112,107,.06)}
   .tag.n{border-color:var(--steel);color:var(--dim)}
-  .empty{border:1px dashed var(--steel);padding:26px 14px;text-align:center;color:var(--dim);border-radius:3px;line-height:1.5;font-size:.88rem}
-  nav.tabs{position:fixed;left:0;right:0;bottom:0;background:#0e1114;border-top:1px solid var(--line);display:flex;justify-content:center;padding-bottom:env(safe-area-inset-bottom);z-index:6}
+  .empty{border:1px dashed var(--steel);padding:26px 16px;text-align:center;color:var(--dim);border-radius:14px;line-height:1.6;font-size:.88rem}
+  nav.tabs{position:fixed;left:0;right:0;bottom:0;background:rgba(14,19,26,.92);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-top:1px solid var(--line);display:flex;justify-content:center;padding-bottom:env(safe-area-inset-bottom);z-index:6}
   nav.tabs .in{display:flex;width:100%;max-width:640px}
-  nav.tabs button{flex:1;background:none;border:0;padding:9px 0 8px;color:var(--dim);font-family:var(--head);letter-spacing:.14em;font-weight:700;font-size:.66rem;text-transform:uppercase;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;border-top:3px solid transparent}
-  nav.tabs button.on{color:var(--amber);border-top-color:var(--amber)}
-  nav.tabs svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:square}
-  #sheet{position:fixed;inset:0;z-index:20;display:none;background:rgba(0,0,0,.66)}
+  nav.tabs button{flex:1;background:none;border:0;padding:10px 0 9px;color:var(--dim);font-family:var(--head);font-weight:600;font-size:.7rem;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;transition:color .15s}
+  nav.tabs button.on{color:var(--text)}
+  nav.tabs button.on svg{stroke:var(--amber)}
+  nav.tabs svg{width:23px;height:23px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+  #sheet{position:fixed;inset:0;z-index:20;display:none;background:rgba(5,8,12,.7);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px)}
   #sheet.open{display:block}
-  #sheet .pane{position:absolute;left:0;right:0;bottom:0;max-width:640px;margin:0 auto;max-height:92dvh;overflow-y:auto;background:var(--panel);border-top:3px solid var(--amber);border-radius:6px 6px 0 0;padding:14px 14px calc(22px + env(safe-area-inset-bottom));animation:up .22s ease-out}
-  @keyframes up{from{transform:translateY(40px);opacity:.4}to{transform:none;opacity:1}}
-  .close{float:right;background:none;border:1px solid var(--steel);border-radius:3px;width:36px;height:36px;font-size:1.1rem;cursor:pointer}
-  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0}
-  .st{background:var(--panel2);border:1px solid var(--line);padding:9px 10px;border-radius:3px}
-  .st small{display:block;font-family:var(--head);letter-spacing:.14em;color:var(--dim);font-size:.64rem;text-transform:uppercase}
+  #sheet .pane{position:absolute;left:0;right:0;bottom:0;max-width:640px;margin:0 auto;max-height:92dvh;overflow-y:auto;background:var(--panel);border-radius:22px 22px 0 0;padding:18px 16px calc(24px + env(safe-area-inset-bottom));animation:up .28s cubic-bezier(.2,.8,.2,1);border-top:1px solid var(--steel)}
+  @keyframes up{from{transform:translateY(60px);opacity:.3}to{transform:none;opacity:1}}
+  .close{float:right;background:var(--panel2);border:1px solid var(--steel);border-radius:999px;width:36px;height:36px;font-size:1rem;cursor:pointer}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0}
+  .st{background:var(--panel2);border:1px solid var(--line);padding:11px 12px;border-radius:12px}
+  .st small{display:block;color:var(--dim);font-size:.7rem;font-weight:600;margin-bottom:2px}
   .st b{font-family:var(--mono);font-size:.92rem;font-weight:600}
-  .range{position:relative;height:8px;background:linear-gradient(90deg,#3a1f1d,#2b333a 50%,#173825);border-radius:1px;margin:10px 0 4px}
-  .range i{position:absolute;top:-5px;width:3px;height:18px;background:var(--amber);box-shadow:0 0 0 2px #0b0d0f}
+  .range{position:relative;height:8px;background:linear-gradient(90deg,#4a2523,#2a3544 50%,#1c4a38);border-radius:999px;margin:14px 0 6px}
+  .range i{position:absolute;top:-5px;width:6px;height:18px;border-radius:3px;background:var(--text);box-shadow:0 0 0 3px var(--panel)}
   .rangelbl{display:flex;justify-content:space-between;font-family:var(--mono);font-size:.7rem;color:var(--dim)}
-  .brk{display:grid;grid-template-columns:110px 1fr 56px;gap:8px;align-items:center;font-size:.78rem;margin:6px 0}
-  .brk .bar{height:6px;background:var(--panel2);border-radius:1px;overflow:hidden}.brk .bar i{display:block;height:100%;background:var(--amber)}
+  .brk{display:grid;grid-template-columns:110px 1fr 56px;gap:8px;align-items:center;font-size:.8rem;margin:7px 0}
+  .brk .bar{height:6px;background:var(--panel2);border-radius:999px;overflow:hidden}.brk .bar i{display:block;height:100%;background:var(--blue);border-radius:999px}
   .brk span:last-child{font-family:var(--mono);text-align:right;color:var(--dim)}
-  .flag{border-left:3px solid var(--down);background:rgba(255,90,79,.06);padding:8px 10px;margin:6px 0;font-size:.82rem;line-height:1.4}
-  .flag b{font-family:var(--head);letter-spacing:.1em;color:#ff9d96;display:block;font-size:.8rem}
-  .note{border-left:3px solid var(--amber);background:rgba(245,165,36,.07);padding:8px 10px;margin:8px 0;font-size:.82rem;line-height:1.4;color:var(--amber2)}
-  .news a{display:block;color:var(--text);text-decoration:none;border-bottom:1px solid var(--line);padding:8px 0;font-size:.84rem;line-height:1.35}
-  .news small{color:var(--dim);font-family:var(--mono);font-size:.68rem}
-  .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(88px + env(safe-area-inset-bottom));background:#1c2228;border:1px solid var(--amber);color:var(--text);padding:10px 14px;border-radius:3px;z-index:40;font-size:.84rem;max-width:90vw;display:none}
+  .flag{border-left:3px solid var(--down);background:rgba(242,112,107,.07);padding:10px 12px;margin:8px 0;font-size:.84rem;line-height:1.45;border-radius:0 10px 10px 0}
+  .flag b{color:#f6a09c;display:block;font-size:.84rem;margin-bottom:2px}
+  .note{border-left:3px solid var(--amber);background:rgba(217,164,65,.08);padding:10px 12px;margin:10px 0;font-size:.84rem;line-height:1.45;color:var(--amber2);border-radius:0 10px 10px 0}
+  .news a{display:block;color:var(--text);text-decoration:none;border-bottom:1px solid var(--line);padding:10px 0;font-size:.86rem;line-height:1.4}
+  .news small{color:var(--dim);font-family:var(--mono);font-size:.7rem}
+  .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(92px + env(safe-area-inset-bottom));background:#222d3b;border:1px solid var(--steel);color:var(--text);padding:12px 16px;border-radius:12px;z-index:40;font-size:.86rem;max-width:90vw;display:none;box-shadow:0 8px 24px rgba(0,0,0,.4)}
   .big{font-family:var(--mono);font-size:2rem;font-weight:700}
-  .kv{display:flex;justify-content:space-between;border-bottom:1px solid var(--line);padding:7px 0;font-size:.86rem}.kv span:last-child{font-family:var(--mono)}
-  .pos{display:flex;justify-content:space-between;align-items:center;gap:8px;background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--steel);border-radius:3px;padding:10px;margin-bottom:8px}
-  #gate{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.92);display:none;align-items:center;justify-content:center;padding:18px}
-  #gate .box{max-width:460px;background:var(--panel);border:1px solid var(--steel);border-top:6px solid var(--amber);padding:20px;border-radius:3px}
-  #gate h1{font-family:var(--head);letter-spacing:.14em;text-transform:uppercase;margin:0 0 10px}
-  #gate ul{padding-left:18px;color:var(--dim);line-height:1.55;font-size:.9rem}
+  .kv{display:flex;justify-content:space-between;border-bottom:1px solid var(--line);padding:9px 0;font-size:.88rem}.kv span:last-child{font-family:var(--mono)}
+  .pos{display:flex;justify-content:space-between;align-items:center;gap:8px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px;margin-bottom:10px}
+  #gate{position:fixed;inset:0;z-index:50;background:rgba(5,8,12,.94);display:none;align-items:center;justify-content:center;padding:18px}
+  #gate .box{max-width:460px;background:var(--panel);border:1px solid var(--steel);padding:22px;border-radius:18px}
+  #gate h1{font-family:var(--head);margin:0 0 10px;font-size:1.4rem}
+  #gate ul{padding-left:18px;color:var(--dim);line-height:1.6;font-size:.92rem}
   .foot{color:var(--dim);font-size:.7rem;text-align:center;padding:10px 20px;line-height:1.5}
-  label.l{display:block;font-family:var(--head);letter-spacing:.14em;font-size:.7rem;color:var(--dim);text-transform:uppercase;margin:12px 0 5px}
+  label.l{display:block;font-weight:600;font-size:.75rem;color:var(--dim);margin:14px 0 6px}
+  details.th{border-bottom:1px solid var(--line)}
+  details.th summary{list-style:none;cursor:pointer;padding:14px 2px;font-family:var(--head);font-weight:600;display:flex;justify-content:space-between;align-items:center}
+  details.th summary::-webkit-details-marker{display:none}
+  details.th summary::after{content:'+';color:var(--amber);font-size:1.3rem;transition:transform .2s}
+  details.th[open] summary::after{content:'–'}
 </style>
 </head>
 <body>
 <div id="app">
-  <div class="hazard"></div>
+  
   <header class="top">
     <div class="logo">
-      <svg viewBox="0 0 32 32" fill="none" stroke="#f5a524" stroke-width="2.4" stroke-linecap="square"><circle cx="16" cy="16" r="11"/><path d="M16 2v8M16 22v8M2 16h8M22 16h8"/><circle cx="16" cy="16" r="2.2" fill="#f5a524"/></svg>
-      <div>SCOUT<small>MARKET RADAR</small></div>
+      <svg viewBox="0 0 32 32" fill="none"><rect x="3" y="3" width="26" height="26" rx="8" fill="#1c2531" stroke="#2a3544"/><path d="M9 21l5-6 4 3 6-8" stroke="#d9a441" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="24" cy="10" r="2" fill="#3ecf8e"/></svg>
+      <div>Scout<small>Small-company finder</small></div>
     </div>
     <div class="pill demo" id="modePill">DEMO</div>
   </header>
@@ -126,7 +133,7 @@
 </div>
 
 <nav class="tabs"><div class="in" id="tabs">
-  <button data-t="radar" class="on"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4.5"/><path d="M12 12l6-6"/></svg>Radar</button>
+  <button data-t="radar" class="on"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4.5"/><path d="M12 12l6-6"/></svg>Discover</button>
   <button data-t="watch"><svg viewBox="0 0 24 24"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>Watch</button>
   <button data-t="paper"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="13"/><path d="M3 10h18M7 15h4"/></svg>Paper</button>
   <button data-t="setup"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/></svg>Setup</button>
@@ -162,7 +169,7 @@ const LS = {
 
 /* ---------------- state ---------------- */
 const S = {
-  key: LS.get('scout_key', ''), tab: 'radar', theme: 'popular', results: [], scanning: false, scanId: 0, filter: 'all', progress: 0, progressTxt: '',
+  key: LS.get('scout_key', ''), tab: 'radar', theme: 'small', results: [], scanning: false, scanId: 0, filter: 'all', progress: 0, progressTxt: '',
   watch: LS.get('scout_watch', []), fx: LS.get('scout_fx', { rate: 0.92, t: 0, approx: true }),
   acc: LS.get('scout_paper', null), snaps: {}, query: ''
 };
@@ -247,7 +254,7 @@ function cardHtml(r) {
   return '<button class="card r-' + r.riskTier + '" data-sym="' + esc(s.symbol) + '">' +
     '<div class="l1"><div><div class="sym">' + esc(s.symbol) + '</div><div class="nm">' + esc(s.name) + '</div></div>' +
     '<div class="px">' + Scout.fmt.usd(s.price) + '<br><span class="' + pctCls(s.changePct) + '">' + Scout.fmt.pct(s.changePct) + '</span></div></div>' +
-    '<div class="gauges"><div class="g"><b>RADAR <span>' + r.radar + ' · ' + r.radarTier + '</span></b>' + seg(r.radar, 'rad') + '</div>' +
+    '<div class="gauges"><div class="g"><b>MOMENTUM <span>' + r.radar + ' · ' + r.radarTier + '</span></b>' + seg(r.radar, 'rad') + '</div>' +
     '<div class="g"><b>RISK <span>' + r.risk + ' · ' + r.riskTier + '</span></b>' + seg(r.risk, 'rsk') + '</div></div>' +
     (r.flags.length ? '<div class="tags">' + r.flags.slice(0, 3).map(f => '<span class="tag">' + esc(f[0]) + '</span>').join('') + '</div>' : '') +
     '</button>';
@@ -270,8 +277,8 @@ function renderRadar() {
   let h = '';
   if (!live()) h += '<div class="banner"><b>DEMO MODE — SAMPLE DATA, NOT REAL.</b> Get a free key (2 minutes) to scan real companies: <a href="https://finnhub.io/register" target="_blank" rel="noopener noreferrer" style="color:var(--amber)">finnhub.io/register</a>, then paste it in SETUP.</div>';
   h += '<h2>Find a company</h2><div class="row"><input type="text" id="q" placeholder="Name or ticker, e.g. Tesla" autocomplete="off" autocorrect="off" value="' + esc(S.query) + '"><button class="btn primary" id="go">Go</button></div><div id="sug"></div>';
-  h += '<h2>Scan a theme</h2><div class="chips" id="themes">' + themes.map(k => '<button class="chip' + (S.theme === k ? ' on' : '') + '" data-k="' + k + '">' + Scout.THEMES[k].label + '</button>').join('') + '</div>';
-  h += '<button class="btn primary block" id="scan"' + (S.scanning ? ' disabled' : '') + '>' + (S.scanning ? 'Scanning…' : 'Scan ' + Scout.THEMES[S.theme].label) + '</button>';
+  h += '<h2>Explore small and growing companies</h2><div class="chips" id="themes">' + themes.map(k => '<button class="chip' + (S.theme === k ? ' on' : '') + '" data-k="' + k + '">' + Scout.THEMES[k].label.replace(/\b(\w)(\w*)/g, (m, a, b) => a + b.toLowerCase()).replace('Ai', 'AI') + '</button>').join('') + '</div>';
+  h += '<button class="btn primary block" id="scan"' + (S.scanning ? ' disabled' : '') + '>' + (S.scanning ? 'Scanning…' : 'Scan this list') + '</button>';
   h += '<div class="prog" id="prog" style="display:' + (S.scanning ? 'block' : 'none') + '"><i style="width:' + S.progress + '%"></i></div><div id="progTxt" style="font-family:var(--mono);font-size:.72rem;color:var(--dim);min-height:16px">' + esc(S.progressTxt) + '</div>';
   h += '<h2>Results</h2><div class="chips" id="filters">' + FILTERS.map(f => '<button class="chip' + (S.filter === f[0] ? ' on' : '') + '" data-f="' + f[0] + '">' + f[1] + '</button>').join('') + '</div>';
   h += '<div id="results">' + resultsHtml() + '</div><div style="color:var(--dim);font-size:.72rem;margin-top:4px">UP / DOWN = share price change, not company profit. Past moves do not predict the future.</div>' + browseHtml();
@@ -285,19 +292,20 @@ function renderRadar() {
   view.onclick = cardClick;
   $('#filters').onclick = e => { const b = e.target.closest('.chip'); if (b) { S.filter = b.dataset.f; document.querySelectorAll('#filters .chip').forEach(c => c.classList.toggle('on', c.dataset.f === S.filter)); $('#results').innerHTML = resultsHtml(); } };
 }
-const FILTERS = [['all', 'ALL'], ['up', '▲ UP TODAY'], ['down', '▼ DOWN TODAY'], ['up3m', '▲ UP 3 MONTHS'], ['down3m', '▼ DOWN 3 MONTHS'], ['hot', 'HIGH RADAR'], ['safer', 'LOWER RISK'], ['new', 'NEWLY LISTED']];
+const FILTERS = [['all', 'ALL'], ['micro', 'MICRO · under $300M'], ['smallc', 'SMALL · under $2B'], ['up', '▲ UP TODAY'], ['down', '▼ DOWN TODAY'], ['up3m', '▲ UP 3 MONTHS'], ['down3m', '▼ DOWN 3 MONTHS'], ['hot', 'HIGH MOMENTUM'], ['safer', 'LOWER RISK'], ['new', 'NEWLY LISTED']];
 function applyFilter(list) {
   const f = S.filter, out = list.filter(r => ({
-    all: () => true, up: () => r.s.changePct > 0, down: () => r.s.changePct < 0, up3m: () => r.s.ret13w > 0, down3m: () => r.s.ret13w < 0,
+    all: () => true, micro: () => r.s.mcapUsd != null && r.s.mcapUsd < 300e6, smallc: () => r.s.mcapUsd != null && r.s.mcapUsd < 2e9, up: () => r.s.changePct > 0, down: () => r.s.changePct < 0, up3m: () => r.s.ret13w > 0, down3m: () => r.s.ret13w < 0,
     hot: () => r.radar >= 55, safer: () => r.risk < 50, new: () => r.age != null && r.age < 36
   }[f] || (() => true))());
   if (f === 'up' || f === 'down') out.sort((a, b) => f === 'up' ? b.s.changePct - a.s.changePct : a.s.changePct - b.s.changePct);
   if (f === 'up3m' || f === 'down3m') out.sort((a, b) => f === 'up3m' ? b.s.ret13w - a.s.ret13w : a.s.ret13w - b.s.ret13w);
+  if (f === 'micro' || f === 'smallc') out.sort((a, b) => a.s.mcapUsd - b.s.mcapUsd);
   if (f === 'safer') out.sort((a, b) => a.risk - b.risk);
   return out;
 }
 function resultsHtml() {
-  if (!S.results.length) return '<div class="empty">' + (S.scanning ? 'Scanning…' : 'Pick a theme and tap SCAN.<br>RADAR = how much is happening.<br>RISK = how easily it could go wrong.') + '</div>';
+  if (!S.results.length) return '<div class="empty">' + (S.scanning ? 'Scanning…' : 'Pick a theme and tap SCAN.<br>MOMENTUM = how much is happening.<br>RISK = how easily it could go wrong.') + '</div>';
   const l = applyFilter(S.results);
   return l.length ? l.map(cardHtml).join('') : '<div class="empty">None match this filter. Try ALL.</div>';
 }
@@ -308,10 +316,10 @@ function cardClick(e) {
 const STARTER_T = ['NVDA', 'TSLA', 'PLTR', 'RKLB', 'OKLO', 'IONQ', 'HOOD', 'SOFI', 'DUOL', 'SMCI', 'LLY', 'COIN'].map(t => Names.LIST.find(d => d.symbol === t)).filter(Boolean);
 function starters() { return live() ? STARTER_T : DEMO.map(d => ({ symbol: d.symbol, name: d.name, about: 'Sample company — demo only' })); }
 function browseHtml() {
-  return '<h2>Browse companies by theme</h2>' + Object.keys(Scout.THEMES).map(k => {
+  return '<h2>Browse every company by theme</h2><div>' + Object.keys(Scout.THEMES).map(k => {
     const rows = Scout.THEMES[k].syms.map(sy => Names.LIST.find(d => d.symbol === sy)).filter(Boolean);
-    return '<div style="font-family:var(--head);letter-spacing:.12em;color:var(--text);font-size:.85rem;margin:14px 0 6px;border-bottom:1px solid var(--line);padding-bottom:4px">' + Scout.THEMES[k].label + '</div>' + rows.map(sugRow).join('');
-  }).join('');
+    return '<details class="th"><summary><span>' + Scout.THEMES[k].label.replace(/\b(\w)(\w*)/g, (m, a, b) => a + b.toLowerCase()).replace('Ai', 'AI') + ' <span style="color:var(--dim);font-weight:400;font-size:.8rem">· ' + rows.length + '</span></span></summary><div style="padding-bottom:6px">' + rows.map(sugRow).join('') + '</div></details>';
+  }).join('') + '</div>';
 }
 function sugRow(d) { return '<button class="card" data-pick="' + esc(d.symbol) + '" style="padding:10px 12px"><div class="l1"><div><span class="sym" style="font-size:1.1rem">' + esc(d.symbol) + '</span> <span style="color:var(--text)">' + esc(d.name) + '</span></div><span style="color:var(--amber)">›</span></div><div class="nm" style="max-width:none">' + esc(d.about) + '</div></button>'; }
 function showSug(q) { const box = $('#sug'); if (!box) return; const r = Names.search(q, 6); box.innerHTML = r.length ? '<div style="margin:6px 0">' + r.map(sugRow).join('') + '</div>' : (q.trim().length > 1 ? '<div class="nm" style="max-width:none;margin:6px 2px">No match in our list. Press Go to try it as a ticker' + (live() ? ' or a name' : ' (live mode searches more)') + '.</div>' : ''); }
@@ -363,12 +371,12 @@ async function openDetail(sym) {
   let h = '<button class="close" id="x">✕</button><div class="sym" style="font-size:1.8rem">' + esc(s.symbol) + '</div><div class="nm" style="max-width:70vw">' + esc(s.name) + '</div>';
   h += '<div class="row" style="justify-content:space-between;margin-top:8px"><div class="big">' + Scout.fmt.usd(s.price) + '</div><div class="' + pctCls(s.changePct) + '" style="font-family:var(--mono);font-size:1.1rem">' + Scout.fmt.pct(s.changePct) + ' today</div></div>';
   h += rangeBar(s);
-  h += '<div class="grid2"><div class="st"><small>Radar</small><b>' + r.radar + ' · ' + r.radarTier + '</b></div><div class="st"><small>Risk</small><b>' + r.risk + ' · ' + r.riskTier + '</b></div>' +
+  h += '<div class="grid2"><div class="st"><small>Momentum</small><b>' + r.radar + ' · ' + r.radarTier + '</b></div><div class="st"><small>Risk</small><b>' + r.risk + ' · ' + r.riskTier + '</b></div>' +
     '<div class="st"><small>Company size</small><b>' + Scout.fmt.big(s.mcapUsd) + (s.mcapUsd ? ' USD' : '') + '</b></div><div class="st"><small>Daily trading</small><b>' + Scout.fmt.big(s.avgVol3m) + ' sh</b></div>' +
     '<div class="st"><small>~3 months</small><b class="' + pctCls(s.ret13w) + '">' + Scout.fmt.pct(s.ret13w) + '</b></div><div class="st"><small>This year</small><b class="' + pctCls(s.retYtd) + '">' + Scout.fmt.pct(s.retYtd) + '</b></div>' +
     '<div class="st"><small>Sales growth</small><b>' + Scout.fmt.pct(s.revGrowth) + '</b></div><div class="st"><small>Listed</small><b>' + esc(s.ipo || '—') + '</b></div></div>';
   if (s.industry) h += '<div style="color:var(--dim);font-size:.8rem">' + esc(s.industry) + (s.country ? ' · ' + esc(s.country) : '') + '</div>';
-  h += '<h2>Why this radar score</h2>' + r.parts.map(p => '<div class="brk"><span>' + p.k + '</span><div class="bar"><i style="width:' + Math.round(p.pts / p.max * 100) + '%"></i></div><span>' + p.pts + '/' + p.max + '</span></div><div style="color:var(--dim);font-size:.72rem;margin:-3px 0 4px 118px">' + esc(p.txt) + '</div>').join('');
+  h += '<h2>Why this momentum score</h2>' + r.parts.map(p => '<div class="brk"><span>' + p.k + '</span><div class="bar"><i style="width:' + Math.round(p.pts / p.max * 100) + '%"></i></div><span>' + p.pts + '/' + p.max + '</span></div><div style="color:var(--dim);font-size:.72rem;margin:-3px 0 4px 118px">' + esc(p.txt) + '</div>').join('');
   h += '<h2>Risks in plain words</h2>' + (r.flags.length ? r.flags.map(f => '<div class="flag"><b>' + esc(f[0]) + '</b>' + esc(f[1]) + '</div>').join('') : '<div class="note" style="border-color:var(--steel);background:var(--panel2);color:var(--dim)">No major red flags from the numbers we have. That does not make it safe — any stock can fall.</div>');
   h += r.notes.map(n => '<div class="note">' + esc(n) + '</div>').join('');
   h += whereToBuy(s);
@@ -430,7 +438,7 @@ function renderPaper() {
     const p = a.pos[k], px = prices()[k], val = px ? p.shares * px * fx * (1 - Scout.FRICTION) : null, pnl = val != null ? val - p.costEur : null;
     return '<div class="pos"><div><div class="sym" style="font-size:1.1rem">' + esc(k) + '</div><div style="font-family:var(--mono);font-size:.75rem;color:var(--dim)">cost ' + Scout.fmt.eur(p.costEur) + (val != null ? ' · now ' + Scout.fmt.eur(val) : '') + '</div></div>' +
       '<div style="text-align:right"><div class="' + pctCls(pnl) + '" style="font-family:var(--mono)">' + (pnl != null ? Scout.fmt.eur(pnl) : '—') + '</div><div class="row" style="margin-top:4px;justify-content:flex-end"><button class="btn small" data-sell="' + k + '" data-f="0.5">Sell ½</button><button class="btn small danger" data-sell="' + k + '" data-f="1">Sell all</button></div></div></div>';
-  }).join('') : '<div class="empty">No open paper positions.<br>Open any company from RADAR and tap “Buy €10”.</div>');
+  }).join('') : '<div class="empty">No open paper positions.<br>Open any company from DISCOVER and tap “Buy €10”.</div>');
   const hist = a.hist.slice(-8).reverse();
   if (hist.length) h += '<h2>Recent trades</h2>' + hist.map(x => '<div class="kv"><span>' + x.side + ' ' + esc(x.sym) + '</span><span>' + Scout.fmt.eur(x.eur) + (x.pnlEur != null ? ' (' + Scout.fmt.eur(x.pnlEur) + ')' : '') + '</span></div>').join('');
   h += '<h2>Reality check</h2>' + realityHtml(10, 20, 1);
@@ -462,7 +470,7 @@ async function refreshPaperPrices() {
 /* ---------------- watchlist ---------------- */
 function renderWatch() {
   let h = '<h2>Watchlist</h2>';
-  if (!S.watch.length) h += '<div class="empty">Nothing here yet.<br>Open a company from RADAR and tap ☆ Add to watchlist.</div>';
+  if (!S.watch.length) h += '<div class="empty">Nothing here yet.<br>Open a company from DISCOVER and tap ☆ Add to watchlist.</div>';
   else {
     const rows = S.watch.map(sym => S.snaps[sym] || (!live() && DEMO.find(d => d.symbol === sym)) || { symbol: sym, name: '(tap Refresh)', price: null });
     h += '<div class="row" style="margin-bottom:10px"><button class="btn block" id="wr">Refresh all</button></div>' + rows.map(s => {
@@ -487,7 +495,7 @@ function renderSetup() {
     '<div class="row" style="margin-top:10px"><button class="btn primary" id="ks">Save &amp; test</button><button class="btn" id="kc">Remove key</button></div></div>';
   h += '<h2>Status</h2><div class="card" style="cursor:default"><div class="kv"><span>Mode</span><span>' + (live() ? 'LIVE' : 'DEMO (sample data)') + '</span></div><div class="kv"><span>USD→EUR</span><span>' + S.fx.rate.toFixed(4) + (S.fx.approx ? ' (approx.)' : '') + '</span></div><div class="kv"><span>Watchlist</span><span>' + S.watch.length + '</span></div></div>';
   h += '<div class="row" style="margin-top:10px"><button class="btn block" id="cc">Clear cached data</button></div>';
-  h += '<h2>How to read the scores</h2><div class="card" style="cursor:default;font-size:.84rem;line-height:1.55;color:var(--dim)"><b style="color:var(--amber)">RADAR (0–100)</b> adds up momentum, closeness to the yearly high, a surge in trading volume, sales growth and how newly listed the company is. It measures <i>attention and trend</i>, not value.<br><br><b style="color:#ff9d96">RISK (0–100)</b> adds up warning signs: tiny company size, thin trading, wild yearly range, a huge recent run-up, a very new listing, high volatility, falling sales and missing data.<br><br>A high radar with high risk is exactly the profile of both lottery wins and big losses. Neither score is a prediction or advice. Always do your own research and use a licensed broker.</div>';
+  h += '<h2>How to read the scores</h2><div class="card" style="cursor:default;font-size:.84rem;line-height:1.55;color:var(--dim)"><b style="color:var(--amber)">MOMENTUM (0–100)</b> adds up momentum, closeness to the yearly high, a surge in trading volume, sales growth and how newly listed the company is. It measures <i>attention and trend</i>, not value.<br><br><b style="color:#ff9d96">RISK (0–100)</b> adds up warning signs: tiny company size, thin trading, wild yearly range, a huge recent run-up, a very new listing, high volatility, falling sales and missing data.<br><br>High momentum with high risk is exactly the profile of both lottery wins and big losses. Neither score is a prediction or advice. Always do your own research and use a licensed broker.</div>';
   view.innerHTML = h;
   $('#ks').onclick = async () => {
     const k = $('#key').value.trim(); if (!k) { toast('Paste a key first.'); return; }

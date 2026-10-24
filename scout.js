@@ -11,6 +11,13 @@
 
   /* ---------- themes (US-listed tickers, incl. big European ADRs). Missing / renamed tickers are skipped at scan time. ---------- */
   const THEMES = {
+    small:   { label: 'SMALL & GROWING', syms: ['BBAI', 'SERV', 'RR', 'NVTS', 'RCAT', 'ONDS', 'ASPI', 'LTBR', 'ENVX', 'AMPX', 'SANA', 'TARS', 'DAVE', 'RZLV', 'UMAC', 'APLD'] },
+    smallspace: { label: 'SMALL SPACE & DRONES', syms: ['BKSY', 'SATL', 'RCAT', 'UMAC', 'DPRO', 'ONDS', 'SPCE', 'RDW', 'LUNR', 'ASTS'] },
+    smallai: { label: 'SMALL AI & DATA', syms: ['BBAI', 'SOUN', 'RZLV', 'IREN', 'APLD', 'WULF', 'CIFR', 'LAES', 'AEHR', 'NVTS'] },
+    smallenergy: { label: 'SMALL ENERGY & MINERALS', syms: ['NXE', 'DNN', 'UUUU', 'LTBR', 'ASPI', 'MP', 'ENVX', 'AMPX', 'SLDP', 'SES', 'EOSE', 'NNE'] },
+    smallbio: { label: 'SMALL BIOTECH', syms: ['BEAM', 'SANA', 'TARS', 'TMDX', 'VKTX', 'RXRX', 'CRSP', 'HIMS'] },
+    smallbiz: { label: 'NEW CONSUMER BRANDS', syms: ['CAVA', 'BROS', 'SG', 'ONON', 'ELF', 'YETI', 'DUOL', 'CELH', 'RDDT'] },
+    smallfin: { label: 'SMALL FINTECH', syms: ['DAVE', 'SOFI', 'AFRM', 'UPST', 'LMND', 'ROOT', 'OPEN', 'HOOD', 'TOST'] },
     popular: { label: 'WELL-KNOWN',      syms: ['AAPL', 'MSFT', 'NVDA', 'AMZN', 'GOOGL', 'META', 'TSLA', 'NFLX', 'AMD', 'DIS', 'NKE', 'V'] },
     ai:      { label: 'AI & CHIPS',      syms: ['NVDA', 'AMD', 'AVGO', 'SMCI', 'ARM', 'PLTR', 'AI', 'SOUN', 'TSM', 'ASML', 'MU', 'MRVL'] },
     quantum: { label: 'QUANTUM',         syms: ['IONQ', 'RGTI', 'QBTS', 'QUBT', 'IBM', 'GOOGL'] },

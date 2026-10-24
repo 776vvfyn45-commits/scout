@@ -1,0 +1,454 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b0d0f">
+<meta name="description" content="Scout — a market radar for spotting new and fast-growing companies, with the risks shown next to the hype. Information only, not financial advice.">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Scout">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-32.png">
+<link rel="apple-touch-icon" href="icon-180.png">
+<title>SCOUT — Market Radar</title>
+<style>
+  :root{
+    --bg:#0b0d0f; --panel:#13171b; --panel2:#1a2025; --steel:#2b333a; --line:#252c32;
+    --text:#e8ebee; --dim:#8b96a1; --amber:#f5a524; --amber2:#ffbf4d; --up:#3ddc84; --down:#ff5a4f; --blue:#5aa9ff;
+    --head:"Bahnschrift","Barlow Condensed","Roboto Condensed","Arial Narrow","Helvetica Neue",Impact,sans-serif;
+    --body:"Segoe UI","Inter",system-ui,-apple-system,Roboto,sans-serif;
+    --mono:"Cascadia Mono","SF Mono",Consolas,Menlo,monospace;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;background:var(--bg);color:var(--text);font-family:var(--body);font-size:15px;overscroll-behavior:none}
+  body{background:
+    repeating-linear-gradient(45deg,rgba(255,255,255,.012) 0 2px,transparent 2px 4px),
+    radial-gradient(900px 400px at 100% -10%,rgba(245,165,36,.07),transparent 60%),var(--bg);min-height:100dvh}
+  button{font-family:inherit;color:inherit}
+  .hazard{height:6px;background:repeating-linear-gradient(135deg,var(--amber) 0 10px,#0b0d0f 10px 20px)}
+  #app{max-width:640px;margin:0 auto;min-height:100dvh;display:flex;flex-direction:column;padding-bottom:calc(76px + env(safe-area-inset-bottom))}
+  .top{display:flex;align-items:center;justify-content:space-between;padding:calc(10px + env(safe-area-inset-top)) 16px 10px;background:linear-gradient(#0e1114,#0b0d0f);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5}
+  .logo{display:flex;align-items:center;gap:10px;font-family:var(--head);font-weight:800;font-size:1.55rem;letter-spacing:.14em;text-transform:uppercase}
+  .logo svg{width:28px;height:28px}
+  .logo small{display:block;font-size:.58rem;font-weight:600;letter-spacing:.22em;color:var(--dim);margin-top:-3px}
+  .pill{font-family:var(--mono);font-size:.68rem;padding:5px 9px;border:1px solid var(--steel);border-radius:3px;letter-spacing:.08em;text-transform:uppercase;color:var(--dim)}
+  .pill.live{color:var(--up);border-color:#1f5c3a}.pill.demo{color:var(--amber);border-color:#6b4a0f}
+  main{padding:14px 14px 20px;flex:1}
+  h2{font-family:var(--head);text-transform:uppercase;letter-spacing:.12em;font-size:.95rem;margin:18px 0 8px;color:var(--amber);font-weight:700}
+  h2:first-child{margin-top:4px}
+  .banner{border:1px solid #6b4a0f;background:rgba(245,165,36,.07);color:var(--amber2);padding:10px 12px;border-radius:3px;font-size:.8rem;line-height:1.45;margin-bottom:12px}
+  .banner.red{border-color:#6a2420;background:rgba(255,90,79,.07);color:#ff9d96}
+  .row{display:flex;gap:8px;align-items:center}
+  input[type=text],input[type=password],input[type=number]{width:100%;background:var(--panel);border:1px solid var(--steel);color:var(--text);padding:12px 12px;border-radius:3px;font-family:var(--mono);font-size:.95rem;text-transform:none;outline:none}
+  input:focus{border-color:var(--amber)}
+  .btn{background:var(--panel2);border:1px solid var(--steel);border-radius:3px;padding:12px 14px;font-family:var(--head);font-weight:700;letter-spacing:.12em;text-transform:uppercase;font-size:.85rem;cursor:pointer;white-space:nowrap}
+  .btn:active{transform:translateY(1px)}
+  .btn.primary{background:var(--amber);border-color:var(--amber);color:#14100a;box-shadow:inset 0 -3px 0 rgba(0,0,0,.25)}
+  .btn.danger{border-color:#6a2420;color:#ff9d96}
+  .btn.block{width:100%}
+  .btn.small{padding:8px 10px;font-size:.74rem}
+  .btn[disabled]{opacity:.45}
+  .chips{display:flex;gap:6px;overflow-x:auto;padding:2px 0 10px;scrollbar-width:none}
+  .chips::-webkit-scrollbar{display:none}
+  .chip{flex:0 0 auto;border:1px solid var(--steel);background:transparent;border-radius:2px;padding:7px 11px;font-family:var(--head);letter-spacing:.1em;font-weight:700;font-size:.75rem;text-transform:uppercase;color:var(--dim);cursor:pointer}
+  .chip.on{background:var(--amber);color:#14100a;border-color:var(--amber)}
+  .prog{height:6px;background:var(--panel2);border:1px solid var(--line);border-radius:1px;margin:10px 0;overflow:hidden}
+  .prog i{display:block;height:100%;width:0;background:repeating-linear-gradient(135deg,var(--amber) 0 8px,#c78312 8px 16px);transition:width .3s}
+  .card{background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--steel);border-radius:3px;padding:12px 12px 11px;margin-bottom:9px;cursor:pointer;display:block;width:100%;text-align:left}
+  .card.r-EXTREME{border-left-color:var(--down)}.card.r-HIGH{border-left-color:#ff9a3c}.card.r-MEDIUM{border-left-color:var(--amber)}.card.r-LOWER{border-left-color:var(--up)}
+  .card .l1{display:flex;justify-content:space-between;gap:10px}
+  .sym{font-family:var(--head);font-weight:800;font-size:1.35rem;letter-spacing:.06em}
+  .nm{color:var(--dim);font-size:.76rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:46vw}
+  .px{font-family:var(--mono);font-size:.95rem;text-align:right}
+  .up{color:var(--up)}.dn{color:var(--down)}
+  .gauges{display:flex;gap:14px;margin-top:9px;align-items:center}
+  .g{flex:1}
+  .g b{font-family:var(--head);font-size:.68rem;letter-spacing:.16em;color:var(--dim);display:flex;justify-content:space-between;margin-bottom:3px;text-transform:uppercase}
+  .g b span{color:var(--text);font-family:var(--mono)}
+  .seg{display:grid;grid-template-columns:repeat(10,1fr);gap:2px;height:7px}
+  .seg i{background:var(--panel2);border-radius:1px}
+  .seg.rad i.on{background:var(--amber)}.seg.rsk i.on{background:#ff7a59}
+  .tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}
+  .tag{font-family:var(--mono);font-size:.62rem;border:1px solid #5a2a26;color:#ff9d96;padding:3px 6px;border-radius:2px;letter-spacing:.05em}
+  .tag.n{border-color:var(--steel);color:var(--dim)}
+  .empty{border:1px dashed var(--steel);padding:26px 14px;text-align:center;color:var(--dim);border-radius:3px;line-height:1.5;font-size:.88rem}
+  nav.tabs{position:fixed;left:0;right:0;bottom:0;background:#0e1114;border-top:1px solid var(--line);display:flex;justify-content:center;padding-bottom:env(safe-area-inset-bottom);z-index:6}
+  nav.tabs .in{display:flex;width:100%;max-width:640px}
+  nav.tabs button{flex:1;background:none;border:0;padding:9px 0 8px;color:var(--dim);font-family:var(--head);letter-spacing:.14em;font-weight:700;font-size:.66rem;text-transform:uppercase;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;border-top:3px solid transparent}
+  nav.tabs button.on{color:var(--amber);border-top-color:var(--amber)}
+  nav.tabs svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:square}
+  #sheet{position:fixed;inset:0;z-index:20;display:none;background:rgba(0,0,0,.66)}
+  #sheet.open{display:block}
+  #sheet .pane{position:absolute;left:0;right:0;bottom:0;max-width:640px;margin:0 auto;max-height:92dvh;overflow-y:auto;background:var(--panel);border-top:3px solid var(--amber);border-radius:6px 6px 0 0;padding:14px 14px calc(22px + env(safe-area-inset-bottom));animation:up .22s ease-out}
+  @keyframes up{from{transform:translateY(40px);opacity:.4}to{transform:none;opacity:1}}
+  .close{float:right;background:none;border:1px solid var(--steel);border-radius:3px;width:36px;height:36px;font-size:1.1rem;cursor:pointer}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0}
+  .st{background:var(--panel2);border:1px solid var(--line);padding:9px 10px;border-radius:3px}
+  .st small{display:block;font-family:var(--head);letter-spacing:.14em;color:var(--dim);font-size:.64rem;text-transform:uppercase}
+  .st b{font-family:var(--mono);font-size:.92rem;font-weight:600}
+  .range{position:relative;height:8px;background:linear-gradient(90deg,#3a1f1d,#2b333a 50%,#173825);border-radius:1px;margin:10px 0 4px}
+  .range i{position:absolute;top:-5px;width:3px;height:18px;background:var(--amber);box-shadow:0 0 0 2px #0b0d0f}
+  .rangelbl{display:flex;justify-content:space-between;font-family:var(--mono);font-size:.7rem;color:var(--dim)}
+  .brk{display:grid;grid-template-columns:110px 1fr 56px;gap:8px;align-items:center;font-size:.78rem;margin:6px 0}
+  .brk .bar{height:6px;background:var(--panel2);border-radius:1px;overflow:hidden}.brk .bar i{display:block;height:100%;background:var(--amber)}
+  .brk span:last-child{font-family:var(--mono);text-align:right;color:var(--dim)}
+  .flag{border-left:3px solid var(--down);background:rgba(255,90,79,.06);padding:8px 10px;margin:6px 0;font-size:.82rem;line-height:1.4}
+  .flag b{font-family:var(--head);letter-spacing:.1em;color:#ff9d96;display:block;font-size:.8rem}
+  .note{border-left:3px solid var(--amber);background:rgba(245,165,36,.07);padding:8px 10px;margin:8px 0;font-size:.82rem;line-height:1.4;color:var(--amber2)}
+  .news a{display:block;color:var(--text);text-decoration:none;border-bottom:1px solid var(--line);padding:8px 0;font-size:.84rem;line-height:1.35}
+  .news small{color:var(--dim);font-family:var(--mono);font-size:.68rem}
+  .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(88px + env(safe-area-inset-bottom));background:#1c2228;border:1px solid var(--amber);color:var(--text);padding:10px 14px;border-radius:3px;z-index:40;font-size:.84rem;max-width:90vw;display:none}
+  .big{font-family:var(--mono);font-size:2rem;font-weight:700}
+  .kv{display:flex;justify-content:space-between;border-bottom:1px solid var(--line);padding:7px 0;font-size:.86rem}.kv span:last-child{font-family:var(--mono)}
+  .pos{display:flex;justify-content:space-between;align-items:center;gap:8px;background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--steel);border-radius:3px;padding:10px;margin-bottom:8px}
+  #gate{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.92);display:none;align-items:center;justify-content:center;padding:18px}
+  #gate .box{max-width:460px;background:var(--panel);border:1px solid var(--steel);border-top:6px solid var(--amber);padding:20px;border-radius:3px}
+  #gate h1{font-family:var(--head);letter-spacing:.14em;text-transform:uppercase;margin:0 0 10px}
+  #gate ul{padding-left:18px;color:var(--dim);line-height:1.55;font-size:.9rem}
+  .foot{color:var(--dim);font-size:.7rem;text-align:center;padding:10px 20px;line-height:1.5}
+  label.l{display:block;font-family:var(--head);letter-spacing:.14em;font-size:.7rem;color:var(--dim);text-transform:uppercase;margin:12px 0 5px}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="hazard"></div>
+  <header class="top">
+    <div class="logo">
+      <svg viewBox="0 0 32 32" fill="none" stroke="#f5a524" stroke-width="2.4" stroke-linecap="square"><circle cx="16" cy="16" r="11"/><path d="M16 2v8M16 22v8M2 16h8M22 16h8"/><circle cx="16" cy="16" r="2.2" fill="#f5a524"/></svg>
+      <div>SCOUT<small>MARKET RADAR</small></div>
+    </div>
+    <div class="pill demo" id="modePill">DEMO</div>
+  </header>
+  <main id="view"></main>
+  <div class="foot">Information only — not financial advice. You can lose all of the money you invest.<br>Scout never trades for you.</div>
+</div>
+
+<nav class="tabs"><div class="in" id="tabs">
+  <button data-t="radar" class="on"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4.5"/><path d="M12 12l6-6"/></svg>Radar</button>
+  <button data-t="watch"><svg viewBox="0 0 24 24"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>Watch</button>
+  <button data-t="paper"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="13"/><path d="M3 10h18M7 15h4"/></svg>Paper</button>
+  <button data-t="setup"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/></svg>Setup</button>
+</div></nav>
+
+<div id="sheet"><div class="pane" id="pane"></div></div>
+<div class="toast" id="toast"></div>
+<div id="gate"><div class="box">
+  <h1>Read this first</h1>
+  <ul>
+    <li>Scout shows facts and risks about companies. It does <b>not</b> tell you what to buy.</li>
+    <li>Nobody can reliably double money every month. Stocks that jump fast often fall just as fast.</li>
+    <li>Small and new companies are where most big losses and scams happen.</li>
+    <li>“Paper” mode uses fake money. Real trades happen only at your own licensed broker, by you.</li>
+    <li>Only ever risk money you can afford to lose completely.</li>
+  </ul>
+  <button class="btn primary block" id="gateOk">I understand</button>
+</div></div>
+
+<script src="scout.js"></script>
+<script src="brokers.js"></script>
+<script>
+(function () {
+'use strict';
+const $ = s => document.querySelector(s);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const LS = {
+  get(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+};
+
+/* ---------------- state ---------------- */
+const S = {
+  key: LS.get('scout_key', ''), tab: 'radar', theme: 'ai', results: [], scanning: false, scanId: 0, progress: 0, progressTxt: '',
+  watch: LS.get('scout_watch', []), fx: LS.get('scout_fx', { rate: 0.92, t: 0, approx: true }),
+  acc: LS.get('scout_paper', null), snaps: {}, query: ''
+};
+if (!S.acc) { S.acc = Scout.newAccount(100); LS.set('scout_paper', S.acc); }
+const live = () => !!S.key;
+const saveAcc = () => LS.set('scout_paper', S.acc);
+
+function toast(msg, ms) { const t = $('#toast'); t.textContent = msg; t.style.display = 'block'; clearTimeout(toast.h); toast.h = setTimeout(() => { t.style.display = 'none'; }, ms || 3200); }
+
+/* ---------------- demo data (clearly fake) ---------------- */
+const DEMO = [
+  ['AURX', 'Aurora Robotics (sample)', 18.4, 6.2, 92, 18.9, 4.1, 1.6, .5, 420e6, 140, 2.3, '2026-01-15'],
+  ['QBRT', 'Quantum Bridge (sample)', 9.8, 11.5, 210, 10.4, 1.9, 4.8, .6, 180e6, 60, 2.9, '2025-11-02'],
+  ['NOVA', 'Nova Grid Energy (sample)', 41.2, 2.1, 48, 44.0, 22, 1.5, 1.1, 5.2e9, 55, 1.6, '2019-05-20'],
+  ['HLIX', 'Helix Therapeutics (sample)', 6.3, -3.4, 15, 9.9, 3.2, .9, .35, 800e6, -8, 1.8, '2023-06-01'],
+  ['STRM', 'Stream Systems (sample)', 128.5, .8, 22, 135, 71, 1.1, 2.4, 61e9, 24, 1.1, '2012-03-14'],
+  ['ORBT', 'Orbit Launch (sample)', 5.1, 19.8, 260, 5.3, .7, 6.2, .3, 90e6, 0, 3.1, '2026-06-10']
+].map(r => ({ symbol: r[0], name: r[1], price: r[2], changePct: r[3], ret5d: r[3] * 1.4, ret13w: r[4], ret26w: r[4] * 1.3, retYtd: r[4] * 1.5, hi52: r[5], lo52: r[6],
+  avgVol10: r[7] * r[8] * 1e6, avgVol3m: r[8] * 1e6, mcapUsd: r[9], revGrowth: r[10], beta: r[11], ipo: r[12], industry: 'Sample sector', country: 'XX', exchange: 'NASDAQ' }));
+
+/* ---------------- Finnhub client: rate-limited + cached ---------------- */
+const API = 'https://finnhub.io/api/v1';
+let nextAt = 0;
+const TTL = { q: 10 * 60e3, m: 12 * 3600e3, p: 7 * 86400e3, n: 30 * 60e3 };
+const cache = LS.get('scout_cache', {});
+function cget(k, ttl) { const c = cache[k]; return c && Date.now() - c.t < ttl ? c.d : null; }
+function cset(k, d) { cache[k] = { t: Date.now(), d }; const ks = Object.keys(cache); if (ks.length > 400) ks.sort((a, b) => cache[a].t - cache[b].t).slice(0, 100).forEach(x => delete cache[x]); LS.set('scout_cache', cache); }
+async function fh(path, params, retry) {
+  const now = Date.now(), wait = Math.max(0, nextAt - now); nextAt = Math.max(now, nextAt) + 1150; if (wait) await sleep(wait);
+  const url = API + path + '?' + new URLSearchParams(Object.assign({}, params, { token: S.key }));
+  let res;
+  try { res = await fetch(url); } catch (e) { throw new Error('NET'); }
+  if (res.status === 429 && !retry) { await sleep(6000); return fh(path, params, true); }
+  if (res.status === 401 || res.status === 403) throw new Error('KEY');
+  if (!res.ok) throw new Error('HTTP' + res.status);
+  return res.json();
+}
+async function getSnap(sym, force) {
+  sym = sym.toUpperCase().trim();
+  if (!live()) return DEMO.find(d => d.symbol === sym) || null;
+  let q = !force && cget('q:' + sym, TTL.q); if (!q) { q = await fh('/quote', { symbol: sym }); cset('q:' + sym, q); }
+  if (!q || !q.c) return null;
+  let m = cget('m:' + sym, TTL.m); if (!m) { m = await fh('/stock/metric', { symbol: sym, metric: 'all' }); cset('m:' + sym, { metric: pickMetric(m) }); m = cget('m:' + sym, TTL.m); }
+  let p = cget('p:' + sym, TTL.p); if (!p) { p = await fh('/stock/profile2', { symbol: sym }); cset('p:' + sym, p || {}); p = p || {}; }
+  const snap = Scout.buildSnapshot(sym, q, m, p); S.snaps[sym] = snap; return snap;
+}
+function pickMetric(m) {      // keep the cache small: only the fields we use
+  const k = ['5DayPriceReturnDaily', '13WeekPriceReturnDaily', '26WeekPriceReturnDaily', 'yearToDatePriceReturnDaily', '52WeekHigh', '52WeekLow', '10DayAverageTradingVolume', '3MonthAverageTradingVolume', 'marketCapitalization', 'beta', 'revenueGrowthTTMYoy'];
+  const out = {}; k.forEach(x => { if (m && m.metric && m.metric[x] != null) out[x] = m.metric[x]; }); return out;
+}
+async function getFx() {
+  if (Date.now() - S.fx.t < 6 * 3600e3) return S.fx.rate;
+  const urls = ['https://api.frankfurter.dev/v1/latest?base=USD&symbols=EUR', 'https://api.frankfurter.app/latest?from=USD&to=EUR'];
+  for (const u of urls) {
+    try { const r = await fetch(u); if (!r.ok) continue; const j = await r.json(); if (j && j.rates && j.rates.EUR) { S.fx = { rate: j.rates.EUR, t: Date.now(), approx: false }; LS.set('scout_fx', S.fx); return S.fx.rate; } } catch (e) {}
+  }
+  return S.fx.rate;
+}
+function errMsg(e) {
+  const m = e && e.message;
+  if (m === 'KEY') return 'Your Finnhub key was rejected. Check it in SETUP.';
+  if (m === 'NET') return 'No connection to the data service. Check your internet.';
+  return 'Data service problem (' + m + '). Try again in a minute.';
+}
+
+/* ---------------- rendering helpers ---------------- */
+function seg(n, cls) { let h = '<div class="seg ' + cls + '">'; const on = Math.round(n / 10); for (let i = 0; i < 10; i++) h += '<i class="' + (i < on ? 'on' : '') + '"></i>'; return h + '</div>'; }
+function pctCls(v) { return v == null ? '' : v >= 0 ? 'up' : 'dn'; }
+function cardHtml(r) {
+  const s = r.s;
+  return '<button class="card r-' + r.riskTier + '" data-sym="' + esc(s.symbol) + '">' +
+    '<div class="l1"><div><div class="sym">' + esc(s.symbol) + '</div><div class="nm">' + esc(s.name) + '</div></div>' +
+    '<div class="px">' + Scout.fmt.usd(s.price) + '<br><span class="' + pctCls(s.changePct) + '">' + Scout.fmt.pct(s.changePct) + '</span></div></div>' +
+    '<div class="gauges"><div class="g"><b>RADAR <span>' + r.radar + ' · ' + r.radarTier + '</span></b>' + seg(r.radar, 'rad') + '</div>' +
+    '<div class="g"><b>RISK <span>' + r.risk + ' · ' + r.riskTier + '</span></b>' + seg(r.risk, 'rsk') + '</div></div>' +
+    (r.flags.length ? '<div class="tags">' + r.flags.slice(0, 3).map(f => '<span class="tag">' + esc(f[0]) + '</span>').join('') + '</div>' : '') +
+    '</button>';
+}
+
+/* ---------------- views ---------------- */
+const view = $('#view');
+function setTab(t) {
+  S.tab = t;
+  document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.t === t));
+  render(); window.scrollTo(0, 0);
+}
+function render() {
+  const pill = $('#modePill'); pill.textContent = live() ? 'LIVE' : 'DEMO'; pill.className = 'pill ' + (live() ? 'live' : 'demo');
+  ({ radar: renderRadar, watch: renderWatch, paper: renderPaper, setup: renderSetup })[S.tab]();
+}
+
+function renderRadar() {
+  const themes = Object.keys(Scout.THEMES);
+  let h = '';
+  if (!live()) h += '<div class="banner"><b>DEMO MODE — SAMPLE DATA, NOT REAL.</b> Add a free Finnhub key in SETUP to scan real companies.</div>';
+  h += '<h2>Look up a ticker</h2><div class="row"><input type="text" id="q" placeholder="TICKER  e.g. NVDA" autocapitalize="characters" autocomplete="off" value="' + esc(S.query) + '"><button class="btn primary" id="go">Go</button></div>';
+  h += '<h2>Scan a theme</h2><div class="chips" id="themes">' + themes.map(k => '<button class="chip' + (S.theme === k ? ' on' : '') + '" data-k="' + k + '">' + Scout.THEMES[k].label + '</button>').join('') + '</div>';
+  h += '<button class="btn primary block" id="scan"' + (S.scanning ? ' disabled' : '') + '>' + (S.scanning ? 'Scanning…' : 'Scan ' + Scout.THEMES[S.theme].label) + '</button>';
+  h += '<div class="prog" id="prog" style="display:' + (S.scanning ? 'block' : 'none') + '"><i style="width:' + S.progress + '%"></i></div><div id="progTxt" style="font-family:var(--mono);font-size:.72rem;color:var(--dim);min-height:16px">' + esc(S.progressTxt) + '</div>';
+  h += '<h2>Results · best radar first</h2><div id="results">' + (S.results.length ? S.results.map(cardHtml).join('') :
+    '<div class="empty">Pick a theme and tap SCAN.<br>RADAR = how much is happening.<br>RISK = how easily it could go wrong.<br>High on both is where big wins <i>and</i> big losses live.</div>') + '</div>';
+  view.innerHTML = h;
+  $('#go').onclick = () => lookup($('#q').value);
+  $('#q').onkeydown = e => { if (e.key === 'Enter') lookup($('#q').value); };
+  $('#themes').onclick = e => { const b = e.target.closest('.chip'); if (b) { S.theme = b.dataset.k; S.results = []; renderRadar(); } };
+  $('#scan').onclick = scan;
+  $('#results').onclick = cardClick;
+}
+function cardClick(e) { const c = e.target.closest('.card'); if (c) openDetail(c.dataset.sym); }
+
+async function lookup(raw) {
+  const sym = String(raw || '').toUpperCase().replace(/[^A-Z0-9.\-]/g, ''); if (!sym) return; S.query = sym;
+  toast('Looking up ' + sym + '…', 8000);
+  try { const sn = await getSnap(sym); if (!sn) { toast('No data for “' + sym + '”. In live mode this covers US-listed stocks.'); return; } S.snaps[sym] = sn; toast('Found ' + sym, 800); openDetail(sym); }
+  catch (e) { toast(errMsg(e), 5000); }
+}
+
+async function scan() {
+  if (S.scanning) return;
+  const id = ++S.scanId; S.scanning = true; S.results = []; S.progress = 0; renderRadar();
+  const syms = Scout.THEMES[S.theme].syms.slice(); let done = 0; const snaps = [];
+  const tick = () => { S.progress = Math.round(done / syms.length * 100); S.progressTxt = done + ' / ' + syms.length + ' checked' + (live() ? ' · free data is rate-limited, first scan takes a minute' : ''); const p = $('#prog i'); if (p) p.style.width = S.progress + '%'; const t = $('#progTxt'); if (t) t.textContent = S.progressTxt; };
+  tick();
+  try {
+    for (const sym of syms) {
+      if (id !== S.scanId) return;
+      try { const sn = await getSnap(sym); if (sn) { snaps.push(sn); S.results = Scout.rank(snaps); const r = $('#results'); if (r && S.tab === 'radar') r.innerHTML = S.results.map(cardHtml).join(''); } }
+      catch (e) { if (e.message === 'KEY' || e.message === 'NET') throw e; }
+      done++; tick(); if (!live()) await sleep(120);
+    }
+    S.progressTxt = 'Done · ' + snaps.length + ' found';
+  } catch (e) { toast(errMsg(e), 6000); S.progressTxt = errMsg(e); }
+  S.scanning = false; if (S.tab === 'radar') renderRadar();
+}
+
+/* ---------------- detail sheet ---------------- */
+function rangeBar(s) {
+  if (!s.hi52 || !s.lo52 || !s.price) return '';
+  const pos = Scout.clamp((s.price - s.lo52) / (s.hi52 - s.lo52), 0, 1) * 100;
+  return '<div class="range"><i style="left:calc(' + pos + '% - 1px)"></i></div><div class="rangelbl"><span>52W LOW ' + Scout.fmt.usd(s.lo52) + '</span><span>HIGH ' + Scout.fmt.usd(s.hi52) + '</span></div>';
+}
+async function openDetail(sym) {
+  sym = sym.toUpperCase();
+  let s = S.snaps[sym] || (!live() && DEMO.find(d => d.symbol === sym)); if (!s) return;
+  const r = Scout.score(s), watching = S.watch.indexOf(sym) !== -1;
+  let h = '<button class="close" id="x">✕</button><div class="sym" style="font-size:1.8rem">' + esc(s.symbol) + '</div><div class="nm" style="max-width:70vw">' + esc(s.name) + '</div>';
+  h += '<div class="row" style="justify-content:space-between;margin-top:8px"><div class="big">' + Scout.fmt.usd(s.price) + '</div><div class="' + pctCls(s.changePct) + '" style="font-family:var(--mono);font-size:1.1rem">' + Scout.fmt.pct(s.changePct) + ' today</div></div>';
+  h += rangeBar(s);
+  h += '<div class="grid2"><div class="st"><small>Radar</small><b>' + r.radar + ' · ' + r.radarTier + '</b></div><div class="st"><small>Risk</small><b>' + r.risk + ' · ' + r.riskTier + '</b></div>' +
+    '<div class="st"><small>Company size</small><b>' + Scout.fmt.big(s.mcapUsd) + (s.mcapUsd ? ' USD' : '') + '</b></div><div class="st"><small>Daily trading</small><b>' + Scout.fmt.big(s.avgVol3m) + ' sh</b></div>' +
+    '<div class="st"><small>~3 months</small><b class="' + pctCls(s.ret13w) + '">' + Scout.fmt.pct(s.ret13w) + '</b></div><div class="st"><small>This year</small><b class="' + pctCls(s.retYtd) + '">' + Scout.fmt.pct(s.retYtd) + '</b></div>' +
+    '<div class="st"><small>Sales growth</small><b>' + Scout.fmt.pct(s.revGrowth) + '</b></div><div class="st"><small>Listed</small><b>' + esc(s.ipo || '—') + '</b></div></div>';
+  if (s.industry) h += '<div style="color:var(--dim);font-size:.8rem">' + esc(s.industry) + (s.country ? ' · ' + esc(s.country) : '') + '</div>';
+  h += '<h2>Why this radar score</h2>' + r.parts.map(p => '<div class="brk"><span>' + p.k + '</span><div class="bar"><i style="width:' + Math.round(p.pts / p.max * 100) + '%"></i></div><span>' + p.pts + '/' + p.max + '</span></div><div style="color:var(--dim);font-size:.72rem;margin:-3px 0 4px 118px">' + esc(p.txt) + '</div>').join('');
+  h += '<h2>Risks in plain words</h2>' + (r.flags.length ? r.flags.map(f => '<div class="flag"><b>' + esc(f[0]) + '</b>' + esc(f[1]) + '</div>').join('') : '<div class="note" style="border-color:var(--steel);background:var(--panel2);color:var(--dim)">No major red flags from the numbers we have. That does not make it safe — any stock can fall.</div>');
+  h += r.notes.map(n => '<div class="note">' + esc(n) + '</div>').join('');
+  h += whereToBuy(s);
+  h += '<h2>Paper trade (fake money)</h2><div class="row" style="flex-wrap:wrap"><button class="btn" data-buy="10">Buy €10</button><button class="btn" data-buy="25">Buy €25</button><button class="btn" data-buy="50">Buy €50</button><button class="btn" data-buy="0">Custom</button></div>';
+  h += '<div class="row" style="margin-top:10px"><button class="btn block" id="wl">' + (watching ? '★ On watchlist — remove' : '☆ Add to watchlist') + '</button></div>';
+  h += '<div id="news"></div><div style="color:var(--dim);font-size:.7rem;margin-top:12px;line-height:1.4">Scores describe past data and risk factors. They do not predict the future and are not advice.</div>';
+  $('#pane').innerHTML = h; $('#sheet').classList.add('open');
+  $('#x').onclick = closeSheet;
+  $('#sheet').onclick = e => { if (e.target.id === 'sheet') closeSheet(); };
+  $('#wl').onclick = () => { const i = S.watch.indexOf(sym); if (i === -1) S.watch.push(sym); else S.watch.splice(i, 1); LS.set('scout_watch', S.watch); S.snaps[sym] = s; toast(i === -1 ? 'Added to watchlist' : 'Removed'); openDetail(sym); };
+  $('#pane').querySelectorAll('[data-buy]').forEach(b => b.onclick = () => paperBuy(sym, s, parseFloat(b.dataset.buy)));
+  if (live()) loadNews(sym);
+}
+function whereToBuy(s) {
+  const w = Brokers.forStock(s), lbl = { likely: 'USUALLY OFFERED', verify: 'CHECK IN APP', unlikely: 'UNLIKELY' };
+  const col = { likely: 'var(--up)', verify: 'var(--amber)', unlikely: 'var(--down)' };
+  let h = '<h2>Where to buy · Germany</h2><div class="note" style="border-color:' + (w.level === 'unlikely' ? 'var(--down)' : 'var(--amber)') + '">' + esc(w.text) + '</div>';
+  w.brokers.forEach(b => {
+    h += '<div class="pos" style="border-left-color:' + col[b.fit] + ';display:block"><div class="row" style="justify-content:space-between"><div class="sym" style="font-size:1.05rem">' + esc(b.name) + '</div><span class="pill" style="color:' + col[b.fit] + ';border-color:' + col[b.fit] + '">' + lbl[b.fit] + '</span></div>' +
+      '<div style="color:var(--dim);font-size:.74rem;margin-top:4px;line-height:1.45">' + esc(b.kind) + '<br>Small amounts: ' + esc(b.fractional) + '<br>Costs: ' + esc(b.feeNote) + '<br>Good: ' + esc(b.plus) + ' · Watch: ' + esc(b.watch) + '</div>' +
+      '<a href="' + esc(b.url) + '" target="_blank" rel="noopener noreferrer" style="color:var(--amber);font-family:var(--head);letter-spacing:.1em;font-size:.78rem;text-decoration:none">OPEN BROKER SITE ↗</a></div>';
+  });
+  return h + '<div style="color:var(--dim);font-size:.7rem;line-height:1.45">Compiled ' + Brokers.UPDATED + ' from public comparison sites. Fees and stock lists change. Before buying, search the ticker <b>' + esc(s.symbol) + '</b> in the broker\'s own app and read its current fee page. Check that the broker is registered with <a href="' + Brokers.URL_CHECK + '" target="_blank" rel="noopener noreferrer" style="color:var(--amber)">BaFin</a>. Not a recommendation.</div>';
+}
+function closeSheet() { $('#sheet').classList.remove('open'); if (S.tab === 'paper' || S.tab === 'watch') render(); }
+async function loadNews(sym) {
+  const box = $('#news'); if (!box) return;
+  try {
+    let n = cget('n:' + sym, TTL.n);
+    if (!n) { const to = new Date(), from = new Date(Date.now() - 14 * 86400000), f = d => d.toISOString().slice(0, 10); n = await fh('/company-news', { symbol: sym, from: f(from), to: f(to) }); n = (n || []).slice(0, 5).map(x => ({ h: x.headline, u: x.url, s: x.source, t: x.datetime })); cset('n:' + sym, n); }
+    if (!n.length) { box.innerHTML = '<h2>News</h2><div style="color:var(--dim);font-size:.82rem">No recent headlines found — for new companies, that itself is worth noting.</div>'; return; }
+    box.innerHTML = '<h2>Latest headlines</h2><div class="news">' + n.map(x => '<a href="' + esc(x.u) + '" target="_blank" rel="noopener noreferrer">' + esc(x.h) + '<br><small>' + esc(x.s) + ' · ' + new Date(x.t * 1000).toISOString().slice(0, 10) + '</small></a>').join('') + '</div>';
+  } catch (e) { box.innerHTML = ''; }
+}
+
+/* ---------------- paper trading ---------------- */
+async function paperBuy(sym, s, eur) {
+  if (!eur) { const v = parseFloat(prompt('How many paper euros to put in ' + sym + '? (you have ' + S.acc.cashEur.toFixed(2) + ')')); if (!(v > 0)) return; eur = v; }
+  const fx = await getFx();
+  const res = Scout.buy(S.acc, sym, eur, s.price, fx, Date.now());
+  if (!res.ok) { toast(res.err); return; }
+  saveAcc(); S.snaps[sym] = s; toast('Paper bought €' + eur.toFixed(0) + ' of ' + sym + ' (0.5% simulated costs)');
+}
+function prices() { const o = {}; Object.keys(S.acc.pos).forEach(k => { const sn = S.snaps[k]; if (sn && sn.price) o[k] = sn.price; else { const q = cget('q:' + k, 1e12); if (q && q.c) o[k] = q.c; } }); return o; }
+function renderPaper() {
+  const a = S.acc, fx = S.fx.rate, v = Scout.valueOf(a, prices(), fx), pl = v.totalEur - a.startEur, st = Scout.stats(a);
+  let h = '<h2>Paper account</h2><div class="card" style="cursor:default"><div style="font-family:var(--head);letter-spacing:.14em;color:var(--dim);font-size:.7rem">TOTAL VALUE</div><div class="big">' + Scout.fmt.eur(v.totalEur) + '</div>' +
+    '<div class="' + pctCls(pl) + '" style="font-family:var(--mono)">' + Scout.fmt.eur(pl) + ' (' + Scout.fmt.pct(pl / a.startEur * 100) + ') since start of €' + a.startEur.toFixed(0) + '</div>' +
+    '<div class="kv" style="margin-top:8px"><span>Cash</span><span>' + Scout.fmt.eur(v.cashEur) + '</span></div><div class="kv"><span>In positions</span><span>' + Scout.fmt.eur(v.posEur) + '</span></div>' +
+    '<div class="kv"><span>Closed trades</span><span>' + st.trades + (st.winRate != null ? ' · ' + Math.round(st.winRate * 100) + '% won' : '') + '</span></div></div>';
+  if (!live()) h += '<div class="banner">Demo prices are fake. In LIVE mode, paper trades use real delayed-free prices.</div>';
+  h += '<div class="row"><button class="btn block" id="pr">Refresh prices</button></div>';
+  const ks = Object.keys(a.pos);
+  h += '<h2>Open positions</h2>' + (ks.length ? ks.map(k => {
+    const p = a.pos[k], px = prices()[k], val = px ? p.shares * px * fx * (1 - Scout.FRICTION) : null, pnl = val != null ? val - p.costEur : null;
+    return '<div class="pos"><div><div class="sym" style="font-size:1.1rem">' + esc(k) + '</div><div style="font-family:var(--mono);font-size:.75rem;color:var(--dim)">cost ' + Scout.fmt.eur(p.costEur) + (val != null ? ' · now ' + Scout.fmt.eur(val) : '') + '</div></div>' +
+      '<div style="text-align:right"><div class="' + pctCls(pnl) + '" style="font-family:var(--mono)">' + (pnl != null ? Scout.fmt.eur(pnl) : '—') + '</div><div class="row" style="margin-top:4px;justify-content:flex-end"><button class="btn small" data-sell="' + k + '" data-f="0.5">Sell ½</button><button class="btn small danger" data-sell="' + k + '" data-f="1">Sell all</button></div></div></div>';
+  }).join('') : '<div class="empty">No open paper positions.<br>Open any company from RADAR and tap “Buy €10”.</div>');
+  const hist = a.hist.slice(-8).reverse();
+  if (hist.length) h += '<h2>Recent trades</h2>' + hist.map(x => '<div class="kv"><span>' + x.side + ' ' + esc(x.sym) + '</span><span>' + Scout.fmt.eur(x.eur) + (x.pnlEur != null ? ' (' + Scout.fmt.eur(x.pnlEur) + ')' : '') + '</span></div>').join('');
+  h += '<h2>Reality check</h2>' + realityHtml(10, 20, 1);
+  h += '<div class="row" style="margin-top:14px"><button class="btn danger block" id="reset">Reset paper account</button></div>';
+  view.innerHTML = h;
+  $('#pr').onclick = refreshPaperPrices;
+  view.querySelectorAll('[data-sell]').forEach(b => b.onclick = async () => {
+    const sym = b.dataset.sell, px = prices()[sym]; if (!px) { toast('Refresh prices first.'); return; }
+    const res = Scout.sell(S.acc, sym, parseFloat(b.dataset.f), px, await getFx(), Date.now()); if (res.ok) { saveAcc(); toast('Sold. Result ' + Scout.fmt.eur(res.pnlEur)); renderPaper(); }
+  });
+  $('#reset').onclick = () => { if (confirm('Reset the paper account to €100 and erase history?')) { S.acc = Scout.newAccount(100); saveAcc(); renderPaper(); } };
+  const rc = $('#rc'); if (rc) { ['rs', 'rt', 'rm'].forEach(id => { $('#' + id).oninput = () => { const x = realityHtml(parseFloat($('#rs').value) || 1, parseFloat($('#rt').value) || 2, Math.max(1, parseFloat($('#rm').value) || 1), true); $('#rcOut').innerHTML = x; }; }); }
+}
+function realityHtml(st, tg, mo, onlyOut) {
+  const r = Scout.realityCheck(st, tg, mo);
+  const out = '<div class="kv"><span>Needed per month</span><span>' + r.perMonthPct.toFixed(0) + '%</span></div><div class="kv"><span>If repeated for a year</span><span>€' + st + ' → €' + Math.round(r.afterYear).toLocaleString('en-US') + '</span></div>' +
+    '<div style="color:var(--dim);font-size:.8rem;line-height:1.45;margin-top:8px">For comparison, broad stock markets have historically gained roughly 7–10% a <i>year</i> on average, with bad years — and that is not guaranteed. Anyone promising ' + r.perMonthPct.toFixed(0) + '% a month is selling hope, not a method.</div>';
+  if (onlyOut) return out;
+  return '<div class="card" id="rc" style="cursor:default"><div class="row"><div style="flex:1"><label class="l" style="margin:0 0 4px">Start €</label><input type="number" id="rs" value="' + st + '"></div><div style="flex:1"><label class="l" style="margin:0 0 4px">Goal €</label><input type="number" id="rt" value="' + tg + '"></div><div style="flex:1"><label class="l" style="margin:0 0 4px">Months</label><input type="number" id="rm" value="' + mo + '"></div></div><div id="rcOut" style="margin-top:8px">' + out + '</div></div>';
+}
+async function refreshPaperPrices() {
+  const ks = Object.keys(S.acc.pos); if (!ks.length) { toast('Nothing to refresh.'); return; }
+  toast('Refreshing…', 6000);
+  try { await getFx(); for (const k of ks) { const sn = await getSnap(k, true); if (sn) S.snaps[k] = sn; } toast('Prices updated'); }
+  catch (e) { toast(errMsg(e), 5000); }
+  if (S.tab === 'paper') renderPaper();
+}
+
+/* ---------------- watchlist ---------------- */
+function renderWatch() {
+  let h = '<h2>Watchlist</h2>';
+  if (!S.watch.length) h += '<div class="empty">Nothing here yet.<br>Open a company from RADAR and tap ☆ Add to watchlist.</div>';
+  else {
+    const rows = S.watch.map(sym => S.snaps[sym] || (!live() && DEMO.find(d => d.symbol === sym)) || { symbol: sym, name: '(tap Refresh)', price: null });
+    h += '<div class="row" style="margin-bottom:10px"><button class="btn block" id="wr">Refresh all</button></div>' + rows.map(s => {
+      if (!s.price) return '<button class="card" data-sym="' + esc(s.symbol) + '"><div class="sym">' + esc(s.symbol) + '</div><div class="nm">' + esc(s.name) + '</div></button>';
+      return cardHtml(Object.assign({ s }, Scout.score(s)));
+    }).join('');
+  }
+  view.innerHTML = h;
+  view.onclick = e => { const c = e.target.closest('.card'); if (c && c.dataset.sym) openDetail(c.dataset.sym); };
+  const wr = $('#wr'); if (wr) wr.onclick = async () => {
+    toast('Refreshing…', 8000);
+    try { for (const sym of S.watch) { const sn = await getSnap(sym, true); if (sn) S.snaps[sym] = sn; } toast('Updated'); } catch (e) { toast(errMsg(e), 5000); }
+    if (S.tab === 'watch') renderWatch();
+  };
+}
+
+/* ---------------- setup ---------------- */
+function renderSetup() {
+  view.onclick = null;
+  let h = '<h2>Live data</h2><div class="card" style="cursor:default"><div style="font-size:.86rem;line-height:1.5;color:var(--dim)">Scout uses <b style="color:var(--text)">Finnhub</b>, which offers a free key for personal use. Create a free account at finnhub.io, copy your API key, and paste it here. It is stored only on this device. Free data covers mainly <b style="color:var(--text)">US-listed</b> stocks (including big European companies that list in the US). It may be delayed, and the free plan limits how fast we can scan.</div>' +
+    '<label class="l">Finnhub API key</label><input type="password" id="key" placeholder="paste key here" value="' + esc(S.key) + '" autocomplete="off">' +
+    '<div class="row" style="margin-top:10px"><button class="btn primary" id="ks">Save &amp; test</button><button class="btn" id="kc">Remove key</button></div></div>';
+  h += '<h2>Status</h2><div class="card" style="cursor:default"><div class="kv"><span>Mode</span><span>' + (live() ? 'LIVE' : 'DEMO (sample data)') + '</span></div><div class="kv"><span>USD→EUR</span><span>' + S.fx.rate.toFixed(4) + (S.fx.approx ? ' (approx.)' : '') + '</span></div><div class="kv"><span>Watchlist</span><span>' + S.watch.length + '</span></div></div>';
+  h += '<div class="row" style="margin-top:10px"><button class="btn block" id="cc">Clear cached data</button></div>';
+  h += '<h2>How to read the scores</h2><div class="card" style="cursor:default;font-size:.84rem;line-height:1.55;color:var(--dim)"><b style="color:var(--amber)">RADAR (0–100)</b> adds up momentum, closeness to the yearly high, a surge in trading volume, sales growth and how newly listed the company is. It measures <i>attention and trend</i>, not value.<br><br><b style="color:#ff9d96">RISK (0–100)</b> adds up warning signs: tiny company size, thin trading, wild yearly range, a huge recent run-up, a very new listing, high volatility, falling sales and missing data.<br><br>A high radar with high risk is exactly the profile of both lottery wins and big losses. Neither score is a prediction or advice. Always do your own research and use a licensed broker.</div>';
+  view.innerHTML = h;
+  $('#ks').onclick = async () => {
+    const k = $('#key').value.trim(); if (!k) { toast('Paste a key first.'); return; }
+    S.key = k; toast('Testing key…', 8000);
+    try { nextAt = 0; const q = await fh('/quote', { symbol: 'AAPL' }); if (q && q.c) { LS.set('scout_key', k); toast('Key works — LIVE mode on.'); render(); } else { S.key = LS.get('scout_key', ''); toast('Key answered but returned no data.'); } }
+    catch (e) { S.key = LS.get('scout_key', ''); toast(errMsg(e), 5000); render(); }
+  };
+  $('#kc').onclick = () => { S.key = ''; try { localStorage.removeItem('scout_key'); } catch (e) {} S.results = []; toast('Key removed — DEMO mode.'); render(); };
+  $('#cc').onclick = () => { Object.keys(cache).forEach(k => delete cache[k]); LS.set('scout_cache', cache); S.snaps = {}; toast('Cache cleared.'); };
+}
+
+/* ---------------- boot ---------------- */
+$('#tabs').onclick = e => { const b = e.target.closest('button'); if (b) setTab(b.dataset.t); };
+if (!LS.get('scout_ack', false)) { $('#gate').style.display = 'flex'; $('#gateOk').onclick = () => { LS.set('scout_ack', true); $('#gate').style.display = 'none'; }; }
+getFx().catch(() => {});
+render();
+if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+})();
+</script>
+</body>
+</html>

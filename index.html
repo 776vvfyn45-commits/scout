@@ -101,7 +101,7 @@
   .note{border-left:3px solid var(--amber);background:rgba(217,164,65,.08);padding:10px 12px;margin:10px 0;font-size:.84rem;line-height:1.45;color:var(--amber2);border-radius:0 10px 10px 0}
   .news a{display:block;color:var(--text);text-decoration:none;border-bottom:1px solid var(--line);padding:10px 0;font-size:.86rem;line-height:1.4}
   .news small{color:var(--dim);font-family:var(--mono);font-size:.7rem}
-  .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(92px + env(safe-area-inset-bottom));background:#222d3b;border:1px solid var(--steel);color:var(--text);padding:12px 16px;border-radius:12px;z-index:40;font-size:.86rem;max-width:90vw;display:none;box-shadow:0 8px 24px rgba(0,0,0,.4)}
+  .toast{pointer-events:none;position:fixed;left:50%;transform:translateX(-50%);bottom:calc(92px + env(safe-area-inset-bottom));background:#222d3b;border:1px solid var(--steel);color:var(--text);padding:12px 16px;border-radius:12px;z-index:40;font-size:.86rem;max-width:90vw;display:none;box-shadow:0 8px 24px rgba(0,0,0,.4)}
   .big{font-family:var(--mono);font-size:2rem;font-weight:700}
   .kv{display:flex;justify-content:space-between;border-bottom:1px solid var(--line);padding:9px 0;font-size:.88rem}.kv span:last-child{font-family:var(--mono)}
   .pos{display:flex;justify-content:space-between;align-items:center;gap:8px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px;margin-bottom:10px}
@@ -295,7 +295,7 @@ function renderRadar() {
   if (!live()) h += '<div class="banner"><b>DEMO MODE — SAMPLE DATA, NOT REAL.</b> Get a free key (2 minutes) to scan real companies: <a href="https://finnhub.io/register" target="_blank" rel="noopener noreferrer" style="color:var(--amber)">finnhub.io/register</a>, then paste it in SETUP.</div>';
   h += '<h2>Find a company</h2><div class="row"><input type="text" id="q" placeholder="Name or ticker, e.g. Tesla" autocomplete="off" autocorrect="off" value="' + esc(S.query) + '"><button class="btn primary" id="go">Go</button></div><div id="sug"></div>';
   h += '<h2>Explore small and growing companies</h2><div class="chips" id="themes">' + themes.map(k => '<button class="chip' + (S.theme === k ? ' on' : '') + '" data-k="' + k + '">' + Scout.THEMES[k].label.replace(/\b(\w)(\w*)/g, (m, a, b) => a + b.toLowerCase()).replace('Ai', 'AI') + '</button>').join('') + '</div>';
-  h += '<button class="btn primary block" id="scan"' + (S.scanning ? ' disabled' : '') + '>' + (S.scanning ? 'Scanning…' : (S.theme === 'wide' ? 'Scan all (takes several minutes)' : 'Scan this list')) + '</button>';
+  h += '<button class="btn primary block" id="scan">' + scanLabel() + '</button>';
   h += '<div class="prog" id="prog" style="display:' + (S.scanning ? 'block' : 'none') + '"><i style="width:' + S.progress + '%"></i></div><div id="progTxt" style="font-family:var(--mono);font-size:.72rem;color:var(--dim);min-height:16px">' + esc(S.progressTxt) + '</div>';
   h += '<h2>Results</h2><div class="chips" id="filters">' + FILTERS.map(f => '<button class="chip' + (S.filter === f[0] ? ' on' : '') + '" data-f="' + f[0] + '">' + f[1] + '</button>').join('') + '</div>';
   h += '<div id="results">' + resultsHtml() + '</div><div style="color:var(--dim);font-size:.72rem;margin-top:4px">UP / DOWN = share price change, not company profit. Past moves do not predict the future.</div>' + browseHtml();
@@ -304,8 +304,8 @@ function renderRadar() {
   $('#q').onkeydown = e => { if (e.key === 'Enter') lookup($('#q').value); };
   $('#q').oninput = () => showSug($('#q').value);
   $('#sug').onclick = e => { const r = e.target.closest('[data-pick]'); if (r) { $('#sug').innerHTML = ''; lookup(r.dataset.pick); } };
-  $('#themes').onclick = e => { const b = e.target.closest('.chip'); if (b) { S.theme = b.dataset.k; S.results = []; renderRadar(); } };
-  $('#scan').onclick = scan;
+  $('#themes').onclick = e => { const b = e.target.closest('.chip'); if (!b) return; S.theme = b.dataset.k; document.querySelectorAll('#themes .chip').forEach(c => c.classList.toggle('on', c === b)); scan(); };
+  $('#scan').onclick = () => scan();
   view.onclick = cardClick;
   $('#filters').onclick = e => { const b = e.target.closest('.chip'); if (b) { S.filter = b.dataset.f; document.querySelectorAll('#filters .chip').forEach(c => c.classList.toggle('on', c.dataset.f === S.filter)); $('#results').innerHTML = resultsHtml(); } };
 }
@@ -346,7 +346,7 @@ async function lookup(raw) {
   raw = String(raw || '').trim(); if (!raw) return;
   const hit = Names.search(raw, 1)[0];
   let sym = (hit && (hit.symbol.toLowerCase() === raw.toLowerCase() || raw.length > 2) ? hit.symbol : raw.toUpperCase().replace(/[^A-Z0-9.\-]/g, '')); if (!sym) return; S.query = '';
-  toast('Looking up ' + sym + '…', 8000);
+  toast('Looking up ' + sym + '…', 3000);
   try {
     let sn = await getSnap(sym);
     if (!sn && live() && !hit) {                   // unknown name: ask Finnhub's search
@@ -358,22 +358,32 @@ async function lookup(raw) {
   } catch (e) { toast(errMsg(e), 5000); }
 }
 
+function scanLabel() { return S.scanning ? 'Scanning…' : (S.theme === 'wide' ? 'Scan all (takes several minutes)' : 'Scan this list'); }
+function scanUi() {
+  if (S.tab !== 'radar') return;
+  const b = $('#scan'); if (b) { b.disabled = false; b.textContent = scanLabel(); }
+  const pr = $('#prog'); if (pr) { pr.style.display = S.scanning ? 'block' : 'none'; const i = pr.querySelector('i'); if (i) i.style.width = S.progress + '%'; }
+  const t = $('#progTxt'); if (t) t.textContent = S.progressTxt;
+  const r = $('#results'); if (r) r.innerHTML = resultsHtml();
+}
 async function scan() {
-  if (S.scanning) return;
-  const id = ++S.scanId; S.scanning = true; S.results = []; S.progress = 0; renderRadar();
+  const id = ++S.scanId; S.scanning = true; S.results = []; S.progress = 0; S.progressTxt = ''; scanUi();
   const syms = Scout.THEMES[S.theme].syms.slice(); let done = 0; const snaps = [];
-  const tick = () => { S.progress = Math.round(done / syms.length * 100); S.progressTxt = done + ' / ' + syms.length + ' checked' + (live() ? ' · free data is rate-limited, first scan takes a minute' : ''); const p = $('#prog i'); if (p) p.style.width = S.progress + '%'; const t = $('#progTxt'); if (t) t.textContent = S.progressTxt; };
+  const tick = () => { if (id !== S.scanId) return; S.progress = Math.round(done / syms.length * 100); S.progressTxt = done + ' / ' + syms.length + ' checked' + (live() ? ' · free data is rate-limited, first scan takes a while' : ''); if (S.tab !== 'radar') return; const p = $('#prog i'); if (p) p.style.width = S.progress + '%'; const tt = $('#progTxt'); if (tt) tt.textContent = S.progressTxt; };
   tick();
   try {
     for (const sym of syms) {
       if (id !== S.scanId) return;
-      try { const sn = await getSnap(sym); if (sn) { snaps.push(sn); S.results = Scout.rank(snaps); const r = $('#results'); if (r && S.tab === 'radar') r.innerHTML = resultsHtml(); } }
-      catch (e) { if (e.message === 'KEY' || e.message === 'NET') throw e; }
+      try {
+        const sn = await getSnap(sym);
+        if (id !== S.scanId) return;
+        if (sn) { snaps.push(sn); S.results = Scout.rank(snaps); const r = S.tab === 'radar' && $('#results'); if (r) r.innerHTML = resultsHtml(); }
+      } catch (e) { if (e.message === 'KEY' || e.message === 'NET') throw e; }
       done++; tick(); if (!live()) await sleep(120);
     }
     S.progressTxt = 'Done · ' + snaps.length + ' found';
-  } catch (e) { toast(errMsg(e), 6000); S.progressTxt = errMsg(e); }
-  S.scanning = false; if (S.tab === 'radar') renderRadar();
+  } catch (e) { if (id !== S.scanId) return; toast(errMsg(e), 6000); S.progressTxt = errMsg(e); }
+  if (id === S.scanId) { S.scanning = false; scanUi(); }
 }
 
 /* ---------------- detail sheet ---------------- */
